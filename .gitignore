@@ -1,0 +1,8 @@
+__pycache__
+.env
+.vscode
+# chat
+media
+static
+.sqlite3
+venv

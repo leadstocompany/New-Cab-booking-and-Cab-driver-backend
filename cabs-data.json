@@ -1,0 +1,349 @@
+[
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 1,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:32:25.367Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Tata"
+    }
+},
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 2,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:32:38.571Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Suzuki"
+    }
+},
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 3,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:32:41.894Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Kia"
+    }
+},
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 4,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:32:45.755Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Scoda"
+    }
+},
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 5,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:32:48.600Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Hyundai"
+    }
+},
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 6,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:32:50.887Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Mahindra"
+    }
+},
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 7,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:32:54.583Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Toyota"
+    }
+},
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 8,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:32:57.785Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Chevrolet"
+    }
+},
+{
+    "model": "cabs.vehiclemaker",
+    "pk": 9,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:01.165Z",
+        "updated_at": "2023-08-24T07:16:22.661Z",
+        "maker": "Volkswagen"
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 1,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:17.187Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Indica",
+        "maker": 1
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 2,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:21.717Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Tiago",
+        "maker": 1
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 3,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:26.571Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Nexon",
+        "maker": 1
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 4,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:32.290Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Punch",
+        "maker": 1
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 5,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:36.605Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Hexa",
+        "maker": 1
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 6,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:42.405Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Safari",
+        "maker": 1
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 7,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:48.922Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Harrier",
+        "maker": 1
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 8,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:33:54.441Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Altroz",
+        "maker": 1
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 9,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:34:00.842Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Swift",
+        "maker": 2
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 10,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:34:06.507Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Breeza",
+        "maker": 2
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 11,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:34:10.388Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "FRONX",
+        "maker": 2
+    }
+},
+{
+    "model": "cabs.vehiclemodel",
+    "pk": 12,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:34:15.226Z",
+        "updated_at": "2023-08-24T07:16:22.665Z",
+        "model": "Dzire",
+        "maker": 2
+    }
+},
+{
+    "model": "cabs.cabtype",
+    "pk": 1,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:38:39.184Z",
+        "updated_at": "2023-08-24T07:16:22.647Z",
+        "cab_type": "CAB"
+    }
+},
+{
+    "model": "cabs.cabtype",
+    "pk": 2,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:38:39.184Z",
+        "updated_at": "2023-08-24T07:16:22.647Z",
+        "cab_type": "TAXI"
+    }
+},
+{
+    "model": "cabs.cabtype",
+    "pk": 3,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:38:39.184Z",
+        "updated_at": "2023-08-24T07:16:22.647Z",
+        "cab_type": "AUTO"
+    }
+},
+{
+    "model": "cabs.cabtype",
+    "pk": 4,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:38:39.184Z",
+        "updated_at": "2023-08-24T07:16:22.647Z",
+        "cab_type": "BIKE"
+    }
+},
+{
+    "model": "cabs.cabtype",
+    "pk": 10,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:38:39.184Z",
+        "updated_at": "2023-08-24T07:16:22.647Z",
+        "cab_type": "Taxi 7-seater"
+    }
+},
+{
+    "model": "cabs.cabtype",
+    "pk": 11,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:38:39.184Z",
+        "updated_at": "2023-08-24T07:16:22.647Z",
+        "cab_type": "Auto Share"
+    }
+},
+{
+    "model": "cabs.cabtype",
+    "pk": 12,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:38:39.184Z",
+        "updated_at": "2023-08-24T07:16:22.647Z",
+        "cab_type": "Auto Personal"
+    }
+},
+{
+    "model": "cabs.cabclass",
+    "pk": 1,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:42:21.692Z",
+        "updated_at": "2023-08-24T07:16:22.642Z",
+        "cab_class": "Cab Share",
+        "cab_type": 1
+    }
+},
+{
+    "model": "cabs.cabclass",
+    "pk": 2,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:42:41.891Z",
+        "updated_at": "2023-08-24T07:16:22.642Z",
+        "cab_class": "Economy",
+        "cab_type": 1
+    }
+},
+{
+    "model": "cabs.cabclass",
+    "pk": 3,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:42:49.394Z",
+        "updated_at": "2023-08-24T07:16:22.642Z",
+        "cab_class": "Comfort",
+        "cab_type": 1
+    }
+},
+{
+    "model": "cabs.cabclass",
+    "pk": 4,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:43:09.706Z",
+        "updated_at": "2023-08-24T07:16:22.642Z",
+        "cab_class": "Premium",
+        "cab_type": 1
+    }
+},
+{
+    "model": "cabs.cabclass",
+    "pk": 5,
+    "fields": {
+        "is_active": true,
+        "created_at": "2023-08-24T06:43:19.491Z",
+        "updated_at": "2023-08-24T07:16:22.642Z",
+        "cab_class": "Taxi 5-seater",
+        "cab_type": 2
+    }
+}
+]

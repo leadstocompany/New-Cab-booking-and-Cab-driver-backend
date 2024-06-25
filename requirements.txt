@@ -5,7 +5,6 @@ attrs==23.1.0
 autobahn==23.1.2
 Automat==22.10.0
 backcall==0.2.0
-backports.zoneinfo==0.2.1;python_version<"3.9"
 boto3==1.28.40
 botocore==1.31.40
 certifi==2023.7.22
@@ -13,6 +12,7 @@ cffi==1.15.1
 channels==4.0.0
 channels-redis==4.1.0
 charset-normalizer==3.2.0
+colorama==0.4.6
 constantly==15.1.0
 cryptography==41.0.4
 daphne==4.0.0
@@ -26,6 +26,7 @@ django-treebeard==4.7
 djangorestframework==3.14.0
 drf-yasg==1.21.7
 executing==1.2.0
+googlemaps==4.10.0
 hyperlink==21.0.0
 idna==3.4
 incremental==22.10.0
@@ -39,6 +40,7 @@ packaging==23.1
 parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
+Pillow==10.1.0
 prompt-toolkit==3.0.39
 psycopg2-binary==2.9.7
 ptyprocess==0.7.0
@@ -60,13 +62,14 @@ service-identity==23.1.0
 six==1.16.0
 sqlparse==0.4.4
 stack-data==0.6.2
+stripe==9.12.0
 traitlets==5.9.0
-twisted==23.8.0
+Twisted==23.8.0
+twisted-iocpsupport==1.0.4
 txaio==23.1.1
-typing-extensions==4.7.1
+typing_extensions==4.7.1
+tzdata==2024.1
 uritemplate==4.1.1
 urllib3==1.26.16
 wcwidth==0.2.6
 zope.interface==6.0
-Pillow==10.1.0
-googlemaps==4.10.0

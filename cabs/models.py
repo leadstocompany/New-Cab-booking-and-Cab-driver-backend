@@ -59,7 +59,7 @@ class Vehicle(BaseModel):
     inside_passanger_seat = models.TextField(null=True, blank=True)
     front_head_light = models.TextField(null=True, blank=True)
     back_head_light = models.TextField(null=True, blank=True)
-    vehicle_certiifcate= models.JSONField(default=None)
+    vehicle_certiifcate=  models.JSONField(default=None, null=True, blank=True) 
     # sound = models.TextField(null=True, blank=True)
     # pollution = models.TextField(null=True, blank=True)
 

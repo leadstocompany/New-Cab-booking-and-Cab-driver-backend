@@ -104,7 +104,7 @@ class User(AbstractUser):
     alternate_number = models.CharField(max_length=74, null=True, blank=True)
   
     photo_upload = models.TextField(null=True, blank=True)
-    user_document= models.JSONField(default=None)
+    user_doc= models.JSONField(default=None)
     terms_policy = models.BooleanField(default=False)
     myride_insurance = models.BooleanField(default=False)
     driver_duty = models.BooleanField(default=False)

@@ -48,7 +48,7 @@ class DriverProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Driver
         fields = ('id','first_name', 'last_name', 'phone', 'email', 'full_address', 'pincode',
-                    'state', 'city', 'house_or_building', 'road_or_area', 'alternate_number','user_document',
+                    'state', 'city', 'house_or_building', 'road_or_area', 'alternate_number','user_doc',
                     'photo_upload', 'terms_policy', 'myride_insurance')
 
 class DriverResetPasswordSerializer(serializers.Serializer):

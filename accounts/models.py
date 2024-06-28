@@ -83,7 +83,7 @@ class User(AbstractUser):
                             default=Types.CUSTOMER)
     username = None
     phone = models.CharField(max_length=10, unique=True)
-    email = models.EmailField(max_length=254, unique=True)
+    email = models.EmailField(max_length=254)
     
     code = models.CharField(max_length=74, editable=False, unique=True)
     birth_day = models.DateField(null=True, blank=True)

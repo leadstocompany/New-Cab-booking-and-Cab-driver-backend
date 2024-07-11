@@ -20,6 +20,8 @@ urlpatterns = [
     re_path(r'^customer-login-with-phone/$',views.LoginCustomerwithPhoneNumberApi.as_view()),
     path('active-vehiclecertificates/', views.ActiveVehicleCertificateFieldList.as_view(), name='active-vehiclecertificatefield-list'),
     path('active-userdocument/', views.ActiveUserDocumentFieldList.as_view(), name='active-userdocument-list'),
-    
-    # re_path(r'^profile/(?P<pk>\d+)/$', views.DriverProfileAPI.as_view())
+    path('bankaccounts/create/', views.BankAccountCreateAPIView.as_view(), name='bankaccount-create'),
+    path('driver/bankaccount/', views.DriverBankAccountAPIView.as_view(), name='driver-bankaccount-detail'),
+    path('driver/bankaccount/update/', views.UpdateDriverBankAccountAPIView.as_view(), name='update-driver-bankaccount'),
+    path('current-location/', views.CurrentUserLocationView.as_view(), name='current-user-location'),
 ]

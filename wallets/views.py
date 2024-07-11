@@ -165,40 +165,38 @@ class WithdrawView(APIView):
 
 
 
-# class GetTransactionView(APIView):
-#     permission_classes = [IsAuthenticated]
+class GetTransactionView(APIView):
+    permission_classes = [IsAuthenticated]
 
-#     def get(self, request, *args, **kwargs):
-#         user = request.user
-#         try:
-#             profile = User.objects.get(user=user)
-#             user_type = profile.user_type
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            profile = User.objects.get(user=user)
+            user_type = profile.user_type
                    
-#         except User.DoesNotExist:
-#             return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
         
-#         if user_type == 'customer':
-#             # Calculate total expenses for customers   
-#             transection=Transaction.objects.filter( user=user)
-#             transection_serializer=TransactionSerializer(today_payments, many=True)
-#             data = {
-#                 "wallet": wallet_serializer.data,
-#                 'total_expenses': total_expenses,
-#                 "transection":transection_serializer.data,
-#             }
-#         else:
-#             # Filter transactions that are of type "DEPOSIT" and created today
-#             today_payments = Transaction.objects.filter( user=user,
-#                 transaction_type="DEPOSIT",
-#                 date__range=(start_of_today, end_of_today)
-#             )
-#             today_payments_serializer=TransactionSerializer(today_payments, many=True)
-#             today_total_payment_amount = Transaction.objects.filter(user=user,transaction_type="DEPOSIT", date__range=(start_of_today, end_of_today)).aggregate(total_amount=Sum('amount'))['total_amount'] or 0.00
+        if user_type == 'customer':
+            # Calculate total expenses for customers   
+            deposit = Transaction.objects.filter(user=user,transaction_type="DEPOSIT")
+            deposit_serializer=TransactionSerializer(deposit, many=True)
+            expense= Transaction.objects.filter(user=user,transaction_type="WITHDRAW")
+            expense_serializer=TransactionSerializer(expense, many=True)
+            data = {
+                'expenses': expense_serializer.data,
+                "deposit":deposit_serializer.data,
+            }
+        else:
+            # Filter transactions that are of type "DEPOSIT" and created today
+            payments = Transaction.objects.filter(user=user,transaction_type="DEPOSIT")
+            payments_serializer=TransactionSerializer(payments, many=True)
+            withdraw = Transaction.objects.filter(user=user,transaction_type="WITHDRAW")
+            withdraw_serializer=TransactionSerializer(withdraw, many=True)
 
-#             data = {
-#                 "wallet": wallet_serializer.data,
-#                 "today_payments":today_payments_serializer.data,
-#                 "today_total_payment_amount":today_total_payment_amount
-#             }
+            data = {
+                "payments":payments_serializer.data,
+                "withdraw":withdraw_serializer.data
+            }
         
-#         return Response(data, status=status.HTTP_200_OK)
+        return Response(data, status=status.HTTP_200_OK)

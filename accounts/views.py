@@ -12,6 +12,10 @@ from django.contrib.auth.hashers import make_password
 from django.conf import settings
 from admin_api.models import VehicleCertificateField, UserDocumentField
 from admin_api.serializers import VehicleCertificateFieldSerializer,UserDocumentFieldSerializer
+from rest_framework import viewsets
+from accounts.serializers import *
+from rest_framework.views import APIView
+
 # Create your views here.
 
 
@@ -19,7 +23,7 @@ class FileUploadAPI(views.APIView):
 
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [parsers.MultiPartParser]
-    serializer_class = serializers.FileUploadSerializer
+    serializer_class = FileUploadSerializer
 
     def post(self, request, format=None, *args, **kwargs):
         serializer = self.serializer_class(
@@ -191,14 +195,14 @@ class CustomerOtpVerifyLoginAPI(views.APIView):
 
 class DriverProfileAPI(generics.RetrieveUpdateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = serializers.DriverProfileSerializer
+    serializer_class = DriverProfileSerializer
 
     def get_object(self):
         return self.request.user
 
 class GetDriverProfileAPI(generics.RetrieveAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = serializers.DriverProfileSerializer
+    serializer_class = DriverProfileSerializer
 
     def get_queryset(self):
         return Driver.objects.filter(is_active=True)
@@ -206,7 +210,7 @@ class GetDriverProfileAPI(generics.RetrieveAPIView):
 
 class CustomerProfileAPI(generics.RetrieveUpdateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = serializers.CustomerProfileSerializer
+    serializer_class =CustomerProfileSerializer
 
     def get_object(self):
         return self.request.user
@@ -214,7 +218,7 @@ class CustomerProfileAPI(generics.RetrieveUpdateAPIView):
 
 class DriverResetPasswordAPI(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = serializers.DriverResetPasswordSerializer
+    serializer_class = DriverResetPasswordSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -241,3 +245,60 @@ class ActiveUserDocumentFieldList(generics.ListAPIView):
 
     def get_queryset(self):
         return UserDocumentField.objects.filter(active=True)
+
+
+class BankAccountCreateAPIView(generics.CreateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    queryset = BankAccount.objects.all()
+    serializer_class = BankAccountSerializer
+
+
+class DriverBankAccountAPIView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def get(self, request, format=None):
+        try:
+            driver_id = request.user.id
+            bank_account = BankAccount.objects.get(driver__id=driver_id)
+            serializer = BankAccountSerializer(bank_account)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except BankAccount.DoesNotExist:
+            return Response({"error": "Bank account not found for this driver."}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+class UpdateDriverBankAccountAPIView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def get_object(self, driver_id):
+        try:
+            return BankAccount.objects.get(driver__id=driver_id)
+        except BankAccount.DoesNotExist:
+            return None
+    def patch(self, request,format=None):
+        driver_id = request.user.id
+        bank_account = self.get_object(driver_id)
+        if not bank_account:
+            return Response({"error": "Bank account not found for this driver."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = BankAccountSerializer(bank_account, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class CurrentUserLocationView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        current_location, created = CurrentLocation.objects.get_or_create(user=request.user)
+        serializer = CurrentLocationSerializer(current_location)
+        return Response(serializer.data)
+
+    def put(self, request):
+        current_location, created = CurrentLocation.objects.get_or_create(user=request.user)
+        serializer = CurrentLocationSerializer(current_location, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)

@@ -3,11 +3,13 @@ from utility.model import BaseModel
 from accounts.models import User
 from cabs.models import *
 from admin_api.models import FeedbackSetting
+from django.core.validators import MinValueValidator
+from decimal import Decimal
 # Create your models here.
 
 
 class Trip(BaseModel):
-    TRIP_STATUS = (('ACCEPTED', 'ACCEPTED'), ('REJECTED', 'REJECTED'), 
+    TRIP_STATUS = (('REQUESTED', 'REQUESTED'), ('ACCEPTED', 'ACCEPTED'), ('REJECTED', 'REJECTED'), 
                     ('BOOKED', 'BOOKED'), ('CANCELLED', 'CANCELLED'),
                    ('ON_TRIP', 'ON_TRIP'), ('COMPLETED', 'COMPLETED'))
 
@@ -26,6 +28,10 @@ class Trip(BaseModel):
     ride_type = models.ForeignKey(CabClass, on_delete=models.CASCADE)
     otp_count = models.PositiveIntegerField(default=1)
     order_id = models.TextField(max_length=74, null=True, blank=True)
+    trip_rent_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))], null=True, blank=True)
+    scheduled_date = models.DateTimeField(null=True, blank=True)
+    scheduled_time = models.DateTimeField(null=True, blank=True)
+
     
     def __str__(self):
         return self.source

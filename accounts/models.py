@@ -82,7 +82,7 @@ class User(AbstractUser):
     type = models.CharField(max_length=11, choices=Types.choices,
                             default=Types.CUSTOMER)
     username = None
-    phone = models.CharField(max_length=10, unique=True)
+    phone = models.CharField(max_length=21, unique=True)
     email = models.EmailField(max_length=254)
     
     code = models.CharField(max_length=74, editable=False, unique=True)
@@ -180,16 +180,7 @@ class CustomerPhoneVerify(models.Model):
 #          not instance.email and not instance.pk:
 #             instance.email = instance.code.lower() + "@jps.myride.com"
 
-@receiver(post_save, sender=Customer)
-def print_only_after_deal_created(sender, instance, created, **kwargs):
-    if created:
-        CustomerPhoneVerify.objects.create(user=instance)
 
-
-@receiver(post_save, sender=Driver)
-def print_only_after_deal_created(sender, instance, created, **kwargs):
-    if created:
-        DriverPhoneVerify.objects.create(user=instance)
 
 
 
@@ -224,3 +215,46 @@ class CustomerReferral(BaseModel):
         return super(CustomerReferral, self).save(*args, **kwargs)
 
 
+class BankAccount(BaseModel):
+    driver = models.ForeignKey(Driver, related_name='backaccount',
+                               on_delete=models.PROTECT)
+    name=models.CharField(max_length=200, unique=True)
+    account_number=models.CharField(max_length=25, unique=True)
+    ifsc_code=models.CharField(max_length=35, unique=True)
+    bank_name=models.CharField(max_length=200, unique=True)
+    def __str__(self):
+        return f'{self.name} - {self.bank_name}'
+
+
+class CurrentLocation(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    current_latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    current_longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.phone} - {self.current_latitude}, {self.current_longitude} at {self.timestamp}"
+    
+
+
+@receiver(post_save, sender=Customer)
+def print_only_after_deal_created(sender, instance, created, **kwargs):
+    if created:
+        CustomerPhoneVerify.objects.create(user=instance)
+
+
+@receiver(post_save, sender=Driver)
+def print_only_after_deal_created(sender, instance, created, **kwargs):
+    if created:
+        DriverPhoneVerify.objects.create(user=instance)
+
+
+
+@receiver(post_save, sender=User)
+def create_user_current_location(sender, instance, created, **kwargs):
+    if created:
+        CurrentLocation.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_current_location(sender, instance, **kwargs):
+    instance.current_location.save()

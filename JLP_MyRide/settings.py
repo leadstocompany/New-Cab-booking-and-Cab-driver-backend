@@ -47,13 +47,14 @@ INSTALLED_APPS = [
     'drf_yasg',
     'storages',
     'corsheaders',
+    'channels',
     'accounts',
     'cabs',
-    'channels',
     'chat',
     'trips',
-    'payment',
+    # 'payment',
     "wallets",
+    'couponcode',
     'admin_api',
   
 
@@ -168,16 +169,16 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("localhost", 6379)],
-        },
-    },
-}
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [("localhost", 6379)],
+#         },
+#     },
+# }
 
-FAST2SMS = env('FAST2SMS')
+
 SERVER_URL = env('SERVER_URL')
 
 USE_S3 = int(os.getenv('USE_S3', 0))
@@ -201,6 +202,31 @@ else:
     MEDIA_URL = 'media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# Celery configuration options
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+
+# Channels Configuration
+# ASGI_APPLICATION = 'your_project_name.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
+    },
+}
+
 CORS_ALLOWED_ORIGINS = [
     # env('CORS_ORIGINS_ONE'),
     'http://*',
@@ -210,9 +236,12 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-KEY_ID = os.getenv('KEY_ID')
-KEY_SECRET = os.getenv('KEY_SECRET')
 
+
+
+TWILIO_ACCOUNT_SID=env("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN=env("TWILIO_AUTH_TOKEN")
+TWILIO_PHONE_NUMBER=env("TWILIO_PHONE_NUMBER")
 
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY')

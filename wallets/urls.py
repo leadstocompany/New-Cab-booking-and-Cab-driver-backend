@@ -6,4 +6,5 @@ urlpatterns = [
     path('wallet/', views.GetWalletView.as_view(), name='get_wallet'),
     path('deposit/', views.DepositView.as_view(), name='deposit'),
     path('withdraw/', views.WithdrawView.as_view(), name='withdraw'),
+    path('get-transaction-list/', views.GetTransactionView.as_view(), name='transaction-list'),
 ]

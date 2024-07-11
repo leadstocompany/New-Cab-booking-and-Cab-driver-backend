@@ -29,4 +29,7 @@ urlpatterns = [
     path('feedbacksetting/', views.FeedbackSettingListCreate.as_view(), name='feedbacksetting-list-create'),
     path('feedbacksetting/<int:pk>/', views.FeedbackSettingRetrieveUpdateDestroy.as_view(), name='feedbacksetting-detail'),
    
+    #cabbookingPrice
+    path('cabbookingprices/', views.CabBookingPriceListCreateView.as_view(), name='cabbookingprice-list-create'),
+    path('cabbookingprices/<int:id>/', views.CabBookingPriceDetailView.as_view(), name='cabbookingprice-detail'),
 ]

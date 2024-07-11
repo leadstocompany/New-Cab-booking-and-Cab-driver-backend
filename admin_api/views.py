@@ -25,6 +25,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.decorators import api_view, permission_classes
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from cabs.serializers import CabBookingPriceSerializer
+from utility.permissions import IsAdminOrSuperuser
 import json
 from admin_api.admin_utility import  vehicle_utility, auth_utility
 # Create your views here.
@@ -92,6 +94,7 @@ class VehicleTypeDetailsView(generics.RetrieveUpdateDestroyAPIView):
 class VehicleClassView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser,FormParser,JSONParser)
     def post(self,request):
         response=vehicle_utility.save_vehicle_class_view(request)
         return response
@@ -264,3 +267,13 @@ class FeedbackSettingRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView
    serializer_class = FeedbackSettingSerializer
 
 
+class CabBookingPriceListCreateView(generics.ListCreateAPIView):
+    queryset = CabBookingPrice.objects.all()
+    serializer_class = CabBookingPriceSerializer
+    permission_classes = [IsAdminOrSuperuser]
+
+class CabBookingPriceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = CabBookingPrice.objects.all()
+    serializer_class = CabBookingPriceSerializer
+    permission_classes = [IsAdminOrSuperuser]
+    lookup_field = 'id'

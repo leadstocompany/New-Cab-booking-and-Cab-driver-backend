@@ -46,8 +46,9 @@ urlpatterns = [
     path('cab/', include('cabs.urls', namespace='cab')),
     path('chat/', include('chat.urls')),
     path('trip/', include('trips.urls')),
-    path('payment/', include('payment.urls')),
+    # path('payment/', include('payment.urls')),
     path('wallets/', include('wallets.urls')),
+    path('couponcode/', include('couponcode.urls')),
     # path('car-booking-api/', include('car_booking_api.urls')),
     path('admin-api/', include('admin_api.urls')),
   

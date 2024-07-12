@@ -185,7 +185,7 @@ class BookingRequestView(APIView):
         )
 
         # Notify drivers asynchronously
-        notify_drivers.delay(trip.id)
+        notify_drivers.delay(trip.id, latitude, longitude)
 
         return Response({"detail": "Booking request sent to nearest drivers."}, status=status.HTTP_200_OK)
 

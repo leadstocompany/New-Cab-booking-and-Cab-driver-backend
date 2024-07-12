@@ -1,4 +1,4 @@
-from django.urls import re_path, include
+from django.urls import re_path, include, path
 
 from trips import views
 
@@ -11,4 +11,6 @@ urlpatterns = [
     re_path(r'^(?P<pk>\d+)/driver-trip/$', views.DriverTripUpdateAPI.as_view(),),
 
     re_path(r'^active-feedback-setting-list/$', views.ActiveFeedbackSettingList.as_view(),),
+    path('request-trip/', views.BookingRequestView.as_view(), name='request-trip'),
+    path('accept-trip/', views.AcceptTripView.as_view(), name='accept-trip'),
 ]

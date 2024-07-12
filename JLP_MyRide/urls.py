@@ -44,7 +44,7 @@ urlpatterns = [
 
     path('account/', include('accounts.urls', namespace='account')),
     path('cab/', include('cabs.urls', namespace='cab')),
-    path('chat/', include('chat.urls')),
+    # path('chat/', include('chat.urls')),
     path('trip/', include('trips.urls')),
     # path('payment/', include('payment.urls')),
     path('wallets/', include('wallets.urls')),

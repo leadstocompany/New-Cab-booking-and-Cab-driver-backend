@@ -29,7 +29,8 @@ SECRET_KEY = 'django-insecure-fgz#mao$)(n#(8+iy2^ljm8^zc^q77w#o#cfnvqa*l)8(v-ozc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['3.109.183.75', '127.0.0.1', 'localhost', '*']
+# ALLOWED_HOSTS = ['3.109.183.75', '127.0.0.1', 'localhost', '*']
+ALLOWED_HOSTS = ['https://jomlahapp.com', '*']
 
 
 # Application definition
@@ -147,10 +148,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+# STATIC_URL = 'static/'
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-MEDIA_URL = 'media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_ROOT = "/var/www/jomlah/static/"
+
+# MEDIA_URL = 'media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = "/var/www/jomlah/media/"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -183,26 +192,26 @@ REST_FRAMEWORK = {
 
 SERVER_URL = env('SERVER_URL')
 
-USE_S3 = int(os.getenv('USE_S3', 0))
-if USE_S3:
-    print("user s3 bucket")
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_DEFAULT_ACL = None
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+# USE_S3 = int(os.getenv('USE_S3', 0))
+# if USE_S3:
+#     print("user s3 bucket")
+#     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+#     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+#     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+#     AWS_DEFAULT_ACL = None
+#     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+#     AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 
-    PUBLIC_MEDIA_LOCATION = 'media'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
-    DEFAULT_FILE_STORAGE = 'JLP_MyRide.storage_backends.PublicMediaStorage'
+#     PUBLIC_MEDIA_LOCATION = 'media'
+#     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
+#     DEFAULT_FILE_STORAGE = 'JLP_MyRide.storage_backends.PublicMediaStorage'
 
-else:
-    print("static file")
-    STATIC_URL = 'static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-    MEDIA_URL = 'media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# else:
+#     print("static file")
+#     STATIC_URL = 'static/'
+#     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+#     MEDIA_URL = 'media/'
+#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Celery Configuration

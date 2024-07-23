@@ -158,6 +158,16 @@ class DriverConsumer(AsyncWebsocketConsumer):
 
     async def send_trip_cancelled(self, event):
         await self.send(text_data=json.dumps(event))
+    
+    async def trip_completed(self, event):
+        message = event['message']
+        trip_id = event['trip_id']
+
+        await self.send(text_data=json.dumps({
+            'type': 'trip.completed',
+            'message': message,
+            'trip_id': trip_id
+        }))
 
 class CustomerConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -176,4 +186,90 @@ class CustomerConsumer(AsyncWebsocketConsumer):
         )
 
     async def send_trip_booked(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def send_trip_cancelled(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def trip_started(self, event):
+        await self.send(text_data=json.dumps(event))
+    
+
+    async def trip_completed(self, event):
+        message = event['message']
+        trip_id = event['trip_id']
+
+        await self.send(text_data=json.dumps({
+            'type': 'trip.completed',
+            'message': message,
+            'trip_id': trip_id
+        }))
+
+
+
+
+class SOSConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        if self.scope["user"].is_staff:
+            await self.channel_layer.group_add("admins", self.channel_name)
+            await self.accept()
+        else:
+            await self.close()
+
+    async def disconnect(self, close_code):
+        if self.scope["user"].is_staff:
+            await self.channel_layer.group_discard("admins", self.channel_name)
+
+    async def receive(self, text_data):
+        pass  # No need to handle incoming messages
+
+    async def send_sos(self, event):
+        await self.send(text_data=json.dumps(event["message"]))
+
+
+
+class NotificationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+        self.group_name = f"user_{self.user.id}"
+
+        # Join room group
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Leave room group
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
+
+    # Receive message from room group
+    async def send_real_time_notification(self, event):
+        message = event['message']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+    async def send_payment_request_notification(self, event):
+        # message = event['message']
+        # trip_id = event['trip_id']
+        # source=event['source'],
+        # destination=event['destination'],
+        # time =event['time'],
+        # distance=event['distance'],
+        # waiting_charge=event['waiting_charge'],
+        # waiting_time=event['waiting_time'],
+        # total_fare=event['total_fare']
+
+        # await self.send(text_data=json.dumps({
+        #     'type': 'trip.completed',
+        #     'message': message,
+        #     'trip_id': trip_id
+        # }))
         await self.send(text_data=json.dumps(event))

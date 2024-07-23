@@ -4,7 +4,7 @@ from .models import Subscription,  SubscriptionPlan, Subscriptions_Logs
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
-        fields = ['id', 'number_of_rides', 'price', 'discount', 'original_price', 'is_active', "created_at", "updated_at"]
+        fields = ['id','plan_name', 'ride_numbers', 'price', 'discount', 'original_price', 'is_active', "created_at", "updated_at"]
 
 
 

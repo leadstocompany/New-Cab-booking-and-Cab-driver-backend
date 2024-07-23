@@ -13,8 +13,8 @@ class TripRatingSerializer(serializers.ModelSerializer):
         model = TripRating
         fields = '__all__'
 
-class DriverPricingRatioSerializer(serializers.ModelSerializer):
+# class DriverPricingRatioSerializer(serializers.ModelSerializer):
     
-    class Meta:
-        model = DriverPricingRatio
-        fields = '__all__'
+#     class Meta:
+#         model = DriverPricingRatio
+#         fields = '__all__'

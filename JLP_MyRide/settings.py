@@ -52,9 +52,11 @@ INSTALLED_APPS = [
     'cabs',
     'chat',
     'trips',
-    # 'payment',
+    'payment',
     "wallets",
     'couponcode',
+    'subscriptions',
+    'sos',
     'admin_api',
   
 

@@ -7,6 +7,7 @@ import stripe
 from JLP_MyRide import settings
 from accounts.models import User
 from rest_framework import status
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -15,6 +16,7 @@ from .serializers import WalletSerializer, TransactionSerializer
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import datetime, time
+from utility.permissions import IsAdminOrSuperuser
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -51,9 +53,9 @@ class GetWalletView(APIView):
         
         if user_type == 'customer':
             # Calculate total expenses for customers
-            total_expenses = self.calculate_total_expenses(user)
-            transection=Transaction.objects.filter( user=user,date__range=(start_of_today, end_of_today))
-            transection_serializer=TransactionSerializer(today_payments, many=True)
+            total_expenses = self.calculate_total_withdrawn(user)
+            transection=Transaction.objects.filter(user=user,date__range=(start_of_today, end_of_today))
+            transection_serializer=TransactionSerializer(transection, many=True)
             data = {
                 "wallet": wallet_serializer.data,
                 'total_expenses': total_expenses,
@@ -200,3 +202,10 @@ class GetTransactionView(APIView):
             }
         
         return Response(data, status=status.HTTP_200_OK)
+
+
+
+class WalletListView(generics.ListAPIView):
+    permission_classes = [IsAdminOrSuperuser]
+    queryset = Wallet.objects.all()
+    serializer_class = WalletSerializer

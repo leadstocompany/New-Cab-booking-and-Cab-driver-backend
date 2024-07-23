@@ -6,4 +6,4 @@ admin.site.register(Trip)
 
 admin.site.register(TripRating)
 
-admin.site.register(DriverPricingRatio)
+# admin.site.register(DriverPricingRatio)

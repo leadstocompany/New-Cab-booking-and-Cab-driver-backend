@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from trips.models import Trip
 import math
-
+from django.db.models import Q
+from subscriptions.models import Subscription
 # Create your views here.
 
 class CabTypeAPI(generics.ListAPIView):
@@ -132,10 +133,12 @@ class NearestDriversView(APIView):
 
         for driver in drivers_without_active_trips:
             try:
-                location = driver.currentlocation
-                distance = haversine(float(latitude),float(longitude), location.current_latitude, location.current_longitude)
-                if distance <= max_distance:
-                    nearby_drivers.append(driver)
+                subscription = Subscription.objects.filter(driver=driver, is_active=True).first()
+                if subscription and subscription.pending_rides > 0:
+                    location = driver.currentlocation
+                    distance = haversine(float(latitude), float(longitude), location.current_latitude, location.current_longitude)
+                    if distance <= max_distance:
+                        nearby_drivers.append(driver)
             except CurrentLocation.DoesNotExist:
                 continue
 

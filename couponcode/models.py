@@ -1,7 +1,7 @@
 from django.db import models
 import string
 import random
-
+from accounts.models import User
 # Create your models here.
 class Coupon(models.Model):
     name=models.CharField(max_length=1000, null=True, blank=True)
@@ -29,3 +29,16 @@ class Coupon(models.Model):
             if not Coupon.objects.filter(code=code).exists():
                 return code
 
+
+
+class CouponUsage(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
+    used_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} used {self.coupon.code}"
+
+    class Meta:
+        db_table = 'couponusage'
+        unique_together = ('user', 'coupon')

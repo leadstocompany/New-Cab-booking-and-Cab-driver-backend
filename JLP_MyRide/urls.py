@@ -46,12 +46,13 @@ urlpatterns = [
     path('cab/', include('cabs.urls', namespace='cab')),
     # path('chat/', include('chat.urls')),
     path('trip/', include('trips.urls')),
-    # path('payment/', include('payment.urls')),
+    path('payment/', include('payment.urls')),
     path('wallets/', include('wallets.urls')),
     path('couponcode/', include('couponcode.urls')),
+    path('subscriptions/', include('subscriptions.urls')),
+    path('sos/', include('sos.urls')),
     # path('car-booking-api/', include('car_booking_api.urls')),
     path('admin-api/', include('admin_api.urls')),
-  
     re_path(r'^', include(routing.websocket_urlpatterns)),
 ]
 urlpatterns  +=  static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

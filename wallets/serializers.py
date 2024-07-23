@@ -33,7 +33,7 @@ class WalletSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         user = request.user
         
-        if hasattr(user, 'profile') and user.profile.user_type == 'customer':
+        if hasattr(user, 'profile') and user.profile.type == 'customer':
             total_withdrawn = Transaction.objects.filter(
                 user=user,
                 transaction_type='WITHDRAW'

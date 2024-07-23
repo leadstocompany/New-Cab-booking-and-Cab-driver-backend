@@ -4,7 +4,8 @@ from datetime import datetime
 from django.utils import timezone
 # Create your models here.
 class SubscriptionPlan(models.Model):
-    number_of_rides=models.PositiveIntegerField(default=0)
+    plan_name=models.CharField(max_length=500, null=True, blank=True)
+    ride_numbers=models.PositiveIntegerField(default=0)
     price=models.PositiveIntegerField(default=0)
     discount=models.PositiveIntegerField(default=0)
     original_price=models.PositiveIntegerField(default=0)

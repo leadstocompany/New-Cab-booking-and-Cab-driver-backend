@@ -85,7 +85,7 @@ class SaveVehicleClassSerializer(serializers.ModelSerializer):
        
 class VehicleMakerSerializers(serializers.ModelSerializer):
     # cab_type = serializers.SerializerMethodField()
-    cab_type = VehicleTypeSerializer()
+    # cab_type = VehicleTypeSerializer()
 
     class Meta:
         model = VehicleMaker

@@ -5,15 +5,17 @@ from utility.model import BaseModel
 def vehicle_model_directory_path(instance, filename):
     print(instance.model, "file_name", filename)
     return 'myride/{0}/{1}'.format(instance.model, filename)
+def vehicle_class_directory_path(instance, filename):
+    
+    return 'myride/{0}/{1}'.format(instance.cab_class, filename)
 class CabType(BaseModel):
     cab_type = models.CharField(max_length=74, unique=True)
-    
     def __str__(self):
         return self.cab_type
 class CabClass(BaseModel):
     cab_class = models.CharField(max_length=200, unique=True)
     cab_type = models.ForeignKey(CabType, on_delete=models.PROTECT)
-    icon = models.FileField(upload_to=vehicle_model_directory_path, null=True, blank=True)
+    icon = models.FileField(upload_to=vehicle_class_directory_path, null=True, blank=True)
     # price = models.FloatField()
 
     def __str__(self):

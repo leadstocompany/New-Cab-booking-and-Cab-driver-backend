@@ -6,7 +6,8 @@ class UserDocumentField(models.Model):
     field_name=models.CharField(max_length=500, unique=True)
     textfield=models.BooleanField(default=False)
     filefield=models.BooleanField(default=True)
-    frontback=models.BooleanField(default=False)
+    front=models.BooleanField(default=True)
+    back=models.BooleanField(default=False)
     active=models.BooleanField(default=True)
     def __str__(self):
         return self.field_name

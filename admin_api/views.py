@@ -28,7 +28,8 @@ from django.views.decorators.csrf import csrf_exempt
 from cabs.serializers import CabBookingPriceSerializer
 from utility.permissions import IsAdminOrSuperuser
 import json
-from admin_api.admin_utility import  vehicle_utility, auth_utility
+from admin_api.serializers import VehicleTypeSerializer, SaveVehicleClassSerializer, VehicleMakerSerializers, SaveVehicleModelSerializer
+from admin_api.admin_utility import auth_utility
 # Create your views here.
 
 class AdminLoginView(views.APIView):
@@ -72,16 +73,13 @@ class AdminProfileUpdateView(generics.UpdateAPIView):
 
 
 # Vehicle API 
-class VehicleTypeView(APIView):
+
+
+class  VehicleTypeListCreateView(generics.ListCreateAPIView):
+    queryset = CabType.objects.all()
+    serializer_class =  VehicleTypeSerializer
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    def post(self, request,  *args, **kwargs):
-        response =vehicle_utility.save_vehicle_type_view(request)
-        return response
-        
-    def get(self, request):
-        response=vehicle_utility.get_vehicle_type(request)
-        return response
+    permission_classes = [IsAdminOrSuperuser]
 
 class VehicleTypeDetailsView(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]
@@ -91,39 +89,26 @@ class VehicleTypeDetailsView(generics.RetrieveUpdateDestroyAPIView):
 
 
            
-class VehicleClassView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    parser_classes = (MultiPartParser,FormParser,JSONParser)
-    def post(self,request):
-        response=vehicle_utility.save_vehicle_class_view(request)
-        return response
-    def get(self, request, *args, **kwargs):
-        model = CabClass.objects.all()
-        serializer = SaveVehicleClassSerializer(model, many=True)
-        response={
-                'success':'true',
-                'status code':status.HTTP_200_OK,
-                'message':"vehilce model list.",
-                'data':serializer.data,
-            }
-        return Response(response, status=status.HTTP_200_OK)
 
+class VehicleClassListCreateView(generics.ListCreateAPIView):
+    queryset = CabClass.objects.all()
+    serializer_class = SaveVehicleClassSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminOrSuperuser]
 class VehicleClassDetailsView(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated & IsAdminUser]
     queryset = CabClass.objects.all()
     serializer_class = SaveVehicleClassSerializer
 
-class VehicleMakerView(APIView):
+
+
+class VehicleMakerListCreateView(generics.ListCreateAPIView):
+    queryset = VehicleMaker.objects.all()
+    serializer_class =  VehicleMakerSerializers
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    def post(self, request,  *args, **kwargs):
-        response=vehicle_utility.save_vehicle_maker_view(request)
-        return response
-    def get(self, request):
-        response=vehicle_utility.get_vehicle_maker_view(request)
-        return response
+    permission_classes = [IsAdminOrSuperuser]
+
 
 class VehicleMakerDetailsVeiw(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]
@@ -168,6 +153,12 @@ class VehicleModelView(APIView):
                 'data':serializer.data,
             }
         return Response(response, status=status.HTTP_200_OK)
+
+# class VehicleModelListCreateView(generics.ListCreateAPIView):
+#     queryset = VehicleModel.objects.all()
+#     serializer_class =  SaveVehicleModelSerializer
+#     authentication_classes = [TokenAuthentication]
+#     permission_classes = [IsAdminOrSuperuser]
 
 class VehicleModelDetailsVeiw(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]

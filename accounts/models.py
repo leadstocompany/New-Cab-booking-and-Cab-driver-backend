@@ -255,6 +255,6 @@ def create_user_current_location(sender, instance, created, **kwargs):
     if created:
         CurrentLocation.objects.create(user=instance)
 
-@receiver(post_save, sender=User)
-def save_user_current_location(sender, instance, **kwargs):
-    instance.current_location.save()
+# @receiver(post_save, sender=User)
+# def save_user_current_location(sender, instance, **kwargs):
+#     instance.current_location.save()

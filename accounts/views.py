@@ -31,7 +31,7 @@ class FileUploadAPI(views.APIView):
             context={'request': request})
         if serializer.is_valid(raise_exception=True):
             instance = serializer.save()
-            url = instance.file.url if settings.USE_S3 else f'{settings.SERVER_URL}{instance.file.url}'
+            url = f'{settings.SERVER_URL}{instance.file.url}'
             return Response({"url": url}, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 

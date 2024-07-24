@@ -36,7 +36,7 @@ class VehicleMakerSerializer(serializers.ModelSerializer):
 class VehicleModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = VehicleModel
-        fields = ['id', 'maker', 'model']
+        fields = ['id', 'maker', 'model', "model_image", "is_active"]
     
     def to_representation(self, instance):
         self.fields['maker'] = VehicleMakerSerializer(read_only=True)

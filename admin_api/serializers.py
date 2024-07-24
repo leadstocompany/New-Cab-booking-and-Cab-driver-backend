@@ -84,11 +84,11 @@ class SaveVehicleClassSerializer(serializers.ModelSerializer):
         return obj.cab_type.cab_type
        
 class VehicleMakerSerializers(serializers.ModelSerializer):
-    cab_type_name = serializers.SerializerMethodField()
+    cab_type = serializers.SerializerMethodField()
     class Meta:
         model = VehicleMaker
         # fields = '__all__'
-        fields = ['id', 'maker', 'cab_type', 'cab_type_name', 'is_active']
+        fields = ['id', 'maker', 'cab_type', 'is_active']
     def validate(self, data):
         # Check if a car with the same name already exists
         maker = data.get('maker')

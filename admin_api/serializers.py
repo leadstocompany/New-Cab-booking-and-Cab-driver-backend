@@ -100,11 +100,15 @@ class VehicleMakerSerializers(serializers.ModelSerializer):
             raise serializers.ValidationError(f'A vehicle Maker with the name "{ maker }" already exists.')
 
         return data
+    def to_representation(self, instance):
+        self.fields['cab_type'] = VehicleTypeSerializer(read_only=True)
+        return super(VehicleMakerSerializers, self).to_representation(instance)
+
        
 
 
 class SaveVehicleModelSerializer(serializers.ModelSerializer):
-    maker_name = VehicleMakerSerializers()
+    # maker_name = VehicleMakerSerializers()
     class Meta:
         model = VehicleModel
         # fields="__all__"
@@ -120,6 +124,9 @@ class SaveVehicleModelSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f'A vehicle Model with the name "{ model }" already exists.')
 
         return data
+    def to_representation(self, instance):
+        self.fields['maker'] = VehicleMakerSerializers(read_only=True)
+        return super(SaveVehicleModelSerializer, self).to_representation(instance)
     
 
 

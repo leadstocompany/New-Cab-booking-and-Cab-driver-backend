@@ -10,13 +10,15 @@ from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Wallet, Transaction
 from .serializers import WalletSerializer, TransactionSerializer
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import datetime, time
 from utility.permissions import IsAdminOrSuperuser
+from django.utils.dateparse import parse_date
+from django.shortcuts import get_object_or_404
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -167,41 +169,6 @@ class WithdrawView(APIView):
 
 
 
-class GetTransactionView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        try:
-            profile = User.objects.get(user=user)
-            user_type = profile.user_type
-                   
-        except User.DoesNotExist:
-            return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        
-        if user_type == 'customer':
-            # Calculate total expenses for customers   
-            deposit = Transaction.objects.filter(user=user,transaction_type="DEPOSIT")
-            deposit_serializer=TransactionSerializer(deposit, many=True)
-            expense= Transaction.objects.filter(user=user,transaction_type="WITHDRAW")
-            expense_serializer=TransactionSerializer(expense, many=True)
-            data = {
-                'expenses': expense_serializer.data,
-                "deposit":deposit_serializer.data,
-            }
-        else:
-            # Filter transactions that are of type "DEPOSIT" and created today
-            payments = Transaction.objects.filter(user=user,transaction_type="DEPOSIT")
-            payments_serializer=TransactionSerializer(payments, many=True)
-            withdraw = Transaction.objects.filter(user=user,transaction_type="WITHDRAW")
-            withdraw_serializer=TransactionSerializer(withdraw, many=True)
-
-            data = {
-                "payments":payments_serializer.data,
-                "withdraw":withdraw_serializer.data
-            }
-        
-        return Response(data, status=status.HTTP_200_OK)
 
 
 
@@ -209,3 +176,41 @@ class WalletListView(generics.ListAPIView):
     permission_classes = [IsAdminOrSuperuser]
     queryset = Wallet.objects.all()
     serializer_class = WalletSerializer
+
+
+
+class UserTransactionListView(generics.ListAPIView):
+    serializer_class = TransactionSerializer
+    # permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrSuperuser]
+
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+        user = get_object_or_404(Usr, id=user_id)
+        return Transaction.objects.filter(user=user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        deposite = queryset.filter(transaction_type="DEPSIT")
+        withdraw = queryset.filter(transaction_type="WITHDRAW")
+
+       
+        date = self.request.query_params.get('date', None)
+        if date:
+            parsed_date = parse_date(date)
+            if parsed_date:
+                deposite = deposite.filter(date__date=parsed_date)
+                withdraw = withdraw.filter(date__date=parsed_date)
+
+        
+        start_date = self.request.query_params.get('start_date', None)
+        end_date = self.request.query_params.get('end_date', None)
+        if start_date and end_date:
+            deposite = deposite.filter(date__date__range=[start_date, end_date])
+            withdraw = withdraw.filter(date__date__range=[start_date, end_date])
+        deposite_serializer = self.get_serializer(deposite, many=True)
+        withdraw_serializer = self.get_serializer(withdraw, many=True)
+        return Response({
+            "deposite": deposite_serializer.data,
+            "withdraw": withdraw_serializer.data
+        }, status=status.HTTP_200_OK)

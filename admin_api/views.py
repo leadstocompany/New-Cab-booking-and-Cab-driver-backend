@@ -28,9 +28,11 @@ from django.views.decorators.csrf import csrf_exempt
 from cabs.serializers import CabBookingPriceSerializer
 from utility.permissions import IsAdminOrSuperuser
 import json
-from admin_api.serializers import VehicleTypeSerializer, SaveVehicleClassSerializer, VehicleMakerSerializers, SaveVehicleModelSerializer
+from admin_api.serializers import VehicleTypeSerializer, SaveVehicleClassSerializer, VehicaleSerializer
 from admin_api.admin_utility import auth_utility
-# Create your views here.
+from utility.pagination import CustomPagination
+from accounts.models import Driver, Customer
+from accounts.serializers import DriverProfileSerializer, 
 
 class AdminLoginView(views.APIView):
     permission_classes = [permissions.AllowAny]
@@ -268,3 +270,7 @@ class CabBookingPriceDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CabBookingPriceSerializer
     permission_classes = [IsAdminOrSuperuser]
     lookup_field = 'id'
+
+
+
+

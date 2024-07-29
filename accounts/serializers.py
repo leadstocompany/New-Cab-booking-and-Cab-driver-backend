@@ -49,7 +49,7 @@ class DriverProfileSerializer(serializers.ModelSerializer):
         model = Driver
         fields = ('id','first_name', 'last_name', 'phone', 'email', 'full_address', 'pincode',
                     'state', 'city', 'house_or_building', 'road_or_area', 'alternate_number','user_doc',
-                    'photo_upload', 'terms_policy', 'myride_insurance')
+                    'photo_upload', 'terms_policy', 'myride_insurance', 'latitude', 'longitude')
 
 class DriverResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)

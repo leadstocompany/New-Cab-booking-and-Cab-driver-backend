@@ -116,10 +116,13 @@ class VehicaleDetailsSerializer(serializers.ModelSerializer):
         return validated_data
        
 class CabBookingPriceSerializer(serializers.ModelSerializer):
-    cab_class = CabClassSerializer()
+    # cab_class = CabClassSerializer(many=True)
     class Meta:
         model = CabBookingPrice
         fields = '__all__'
+    def to_representation(self, instance):
+        self.fields['cab_class'] =  CabClassSerializer(read_only=True)
+        return super(CabBookingPriceSerializer, self).to_representation(instance)
 
 
 

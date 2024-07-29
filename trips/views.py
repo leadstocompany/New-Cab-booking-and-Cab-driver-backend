@@ -80,39 +80,6 @@ class ActiveFeedbackSettingList(generics.ListAPIView):
 
 
 
-class BookingRequestView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    def post(self, request, *args, **kwargs):
-        customer = request.user
-        source = request.data.get('source')
-        destination = request.data.get('destination')
-        ride_type_id = request.data.get('ride_type')
-        latitude = float(request.data.get('latitude'))
-        longitude = float(request.data.get('longitude'))
-        trip_rent_price = request.data.get('trip_rent_price')
-        scheduled_datetime=request.data.get('scheduled_datetime', None)
-        payment_type= request.data.get('payment_type')
-        otp = str(random.randint(1000, 9999))
-        
-        # Create trip request
-        trip = Trip.objects.create(
-            customer=customer,
-            source=source,
-            destination=destination,
-            ride_type_id=ride_type_id,
-            trip_rent_price=trip_rent_price,
-            status='REQUESTED',
-            otp=otp,
-            # latitude=latitude,
-            # longitude=longitude
-            scheduled_datetime=scheduled_datetime,
-            payment_type=payment_type,
-        )
-
-        # Notify drivers asynchronously
-        notify_drivers.delay(trip.id, latitude, longitude, scheduled_datetime)
-       
-        return Response({"detail": "Booking request sent to nearest drivers.", "otp":otp}, status=status.HTTP_200_OK)
 
 class AcceptTripView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -134,7 +101,7 @@ class CancelTripView(APIView):
 
         try:
             trip = Trip.objects.get(id=trip_id)
-            if trip.status not in ['CANCELLED', 'COMPLETED', 'ON_TRIP']:
+            if trip.statu not in ['CANCELLED', 'COMPLETED', 'ON_TRIP']:
                 trip.status = 'CANCELLED'
                 trip.canceled_by = user
                 trip.cancel_reason = cancel_reason
@@ -154,12 +121,12 @@ class CancelTripView(APIView):
 class VerifyOTPAndStartTripView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     def post(self, request, *args, **kwargs):
-        trip_id = request.data.get('trip_id')
+        trip_id = request.data.get('trp_id')
         otp = request.data.get('otp')
         driver = request.user
 
         try:
-            trip = Trip.objects.get(id=trip_id, driver=driver, status='BOOKED')
+            trip = Trip.objects.get(id=trip_id, driver=driver, status='BOOKE')
             if trip.otp_count == otp:
                 trip.status = 'ON_TRIP'
                 trip.save()
@@ -175,13 +142,13 @@ class VerifyOTPAndStartTripView(APIView):
 class CompleteTripView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     def post(self, request, *args, **kwargs):
-        trip_id = request.data.get('trip_id')
+        trip_id = request.data.get('rip_id')
         user = request.user
 
         try:
             trip = Trip.objects.get(id=trip_id)
             if trip.status == 'ON_TRIP' and trip.driver == user:
-                trip.status = 'COMPLETED'
+                trip.status = 'COMPLTED'
                 trip.save()
                 notify_trip_completed.delay(trip.id, trip.customer.id, trip.driver.id)
                 return Response({"detail": "Trip completed successfully."}, status=status.HTTP_200_OK)

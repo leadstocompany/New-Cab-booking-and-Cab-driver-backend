@@ -8,4 +8,7 @@ urlpatterns = [
     path('withdraw/', views.WithdrawView.as_view(), name='withdraw'),
     path('get-transaction-list/', views.GetTransactionView.as_view(), name='transaction-list'),
     path('admin/wallets/', views.WalletListView.as_view(), name='wallet-list'),
+    path('admin/users/<int:user_id>/transactions/', views.UserTransactionListView.as_view(), name='user-transactions'),
+    # ?date=""
+    # ?start_date=""&end_date=""
 ]

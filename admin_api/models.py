@@ -9,6 +9,7 @@ class UserDocumentField(models.Model):
     front=models.BooleanField(default=True)
     back=models.BooleanField(default=False)
     active=models.BooleanField(default=True)
+    suggetions_text=models.CharField(max_length=500, null=True, blank=True)
     def __str__(self):
         return self.field_name
 

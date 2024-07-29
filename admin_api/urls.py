@@ -32,4 +32,18 @@ urlpatterns = [
     #cabbookingPrice
     path('cabbookingprices/', views.CabBookingPriceListCreateView.as_view(), name='cabbookingprice-list-create'),
     path('cabbookingprices/<int:id>/', views.CabBookingPriceDetailView.as_view(), name='cabbookingprice-detail'),
+
+    # Driver api  
+    path('driver/', views.DriverListCreateView.as_view(), name='driver-list-create'),
+    path('driver/<int:id>/', views.DriverDetailView.as_view(), name='drivers-detail'),
+
+
+    # Passengers api  
+    path('passengers/', views.PassengersListCreateView.as_view(), name='passengers-list-create'),
+    path('passenger/<int:id>/', views.PassengersDetailView.as_view(), name='passenger-detail'),
+
+
+     # Passengers api  
+    path('vehicles/', views.VehicleListCreateView.as_view(), name='vehicle-list-create'),
+    path('vehicle/<int:id>/', views.VehicleDetailView.as_view(), name='vehicle-detail'),
 ]

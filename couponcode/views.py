@@ -17,15 +17,12 @@ class CouponListCreateView(generics.ListCreateAPIView):
 
 class CouponDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Coupon.objects.all()
-    serializer_class = CouponSerializer
+    serializer_class = CouponSrializer
     permission_classes = [IsAdminOrSuperuser]
     lookup_field = 'code'
 
 
-class ActiveCouponListView(generics.ListAPIView):
-    queryset = Coupon.objects.filter(active=True)
-    serializer_class = ActiveCouponSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
 
 
 class ActiveCouponDetailView(generics.RetrieveAPIView):
@@ -36,15 +33,15 @@ class ActiveCouponDetailView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         coupon_code = self.kwargs.get('code')
         try:
-            coupon = Coupon.objects.get(code=coupon_code)
-            serializer = self.get_serializer(coupon)
+            coupon = Coupon.ojects.get(code=coupon_code)
+            serializer = self.gt_serializer(coupon)
             return Response(serializer.data)
         except Coupon.DoesNotExist:
             return Response({'detail': 'Coupon not found'}, status=status.HTTP_404_NOT_FOUND)
 
 class ApplyCouponAPI(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [Toke9Authentication]
 
     def post(self, request, *args, **kwargs):
         coupon_code = request.data.get('code')
@@ -56,7 +53,7 @@ class ApplyCouponAPI(APIView):
         except Coupon.DoesNotExist:
             return Response({'valid': False, 'error': 'Invalid coupon code'}, status=404)
 
-        if CouponUsage.objects.filter(user=self.request.user, coupon=coupon).exists():
+        if CouponUsage.objects.filter(user=self.rquest.user, coupon=coupon).exists():
             return Response({'valid': False, 'error': 'You have already used this coupon code'}, status=400)
 
         if coupon.is_valid():
@@ -68,7 +65,7 @@ class ApplyCouponAPI(APIView):
 
 
 class CouponUsageListAPIView(generics.ListAPIView):
-    queryset = CouponUsage.objects.all()
+    queryset = CoupnUsage.objects.all()
     serializer_class = CouponUsageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permis\sion_classes = [permissions.IsAuthenticated]
     authentication_classes = [TokenAuthentication]

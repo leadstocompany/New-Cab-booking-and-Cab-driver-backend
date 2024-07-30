@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions
 from .models import SOSHelpRequest
-from .serializers import SOSHelpRequestSerializer
+from .serializers import *
 from rest_framework import generics
 from .tasks import send_sos_notification
 from utility.permissions import IsAdminOrSuperuser
@@ -13,10 +13,10 @@ class SOSHelpRequestCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         sos_request = serializer.save(user=self.request.user)
-        send_sos_notification.delay(sos_request.id)
+        send_sos_notification(sos_request.id)
 
 
 class SOSHelpRequestListView(generics.ListAPIView):
     queryset = SOSHelpRequest.objects.all()
-    serializer_class = SOSHelpRequestSerializer
+    serializer_class = SOSHelpRequstSerializer
     permission_classes = [IsAdminOrSuperuser]

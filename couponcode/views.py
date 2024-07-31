@@ -4,7 +4,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Coupon, CouponUsage
-from .serializers import CouponSerializer, ActiveCouponSerializer, CouponUsageSerializer
+from .serializers import CouponSerializer, CouponUsageSerializer
 from utility.permissions import IsAdminOrSuperuser
 from rest_framework.views import APIView
 # Create your views here.
@@ -19,7 +19,7 @@ class CouponDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Coupon.objects.all()
     serializer_class = CouponSrializer
     permission_classes = [IsAdminOrSuperuser]
-    lookup_field = 'code'
+
 
 
 
@@ -27,8 +27,7 @@ class CouponDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class ActiveCouponDetailView(generics.RetrieveAPIView):
     queryset = Coupon.objects.filter(active=True)
-    serializer_class = ActiveCouponSerializer
-    permission_classes = [permissions.IsAuthenticated]
+  
 
     def retrieve(self, request, *args, **kwargs):
         coupon_code = self.kwargs.get('code')

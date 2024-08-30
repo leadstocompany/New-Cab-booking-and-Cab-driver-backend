@@ -4,9 +4,12 @@ from utility.model import BaseModel
 from trips.models import Trip
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from accounts.models import Driver, Customer
 # Create your models here.
 class Payment(BaseModel):
     trip=models.ForeignKey(Trip,  on_delete=models.PROTECT)
+    driver=models.ForeignKey(Driver, on_delete=models.CASCADE, related_name="driver_receive_payment", null=True, blank=True)
+    passenger=models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="passenger_pay_ride_charge", null=True, blank=True)
     amount=models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))])
     currency = models.CharField(max_length=10, default='usd')
     payment_type=models.CharField(max_length=255, null=True, blank=True)

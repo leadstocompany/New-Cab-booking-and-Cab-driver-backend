@@ -54,7 +54,7 @@ class PaymentQRCodeGenerateView(APIView):
       
         if trip.payment_type=="QRCode":
             payment_session= create_payment_session(total_fare * 100, trip)
-            payment_instance=Payment.objects.create(trip=trip, amount=total_fare, payment_type=trip.payment_type,payment_status="PENDING", currency="usd", payment_id= payment_session['id'])
+            payment_instance=Bill_Payment.objects.create(trip=trip, amount=total_fare, payment_type=trip.payment_type,payment_status="PENDING", currency="usd", payment_id= payment_session['id'])
             
             return Response({"detail": "Payment urls generate successfully.", "payment_url":payment_session.url, "payment_type":trip.payment_type, "trip_id":trip.id, "peyment_instance": payment_instance},  status=status.HTTP_200_OK)
         else:
@@ -102,14 +102,18 @@ class CreatePaymentIntentView(APIView):
             currency='usd',
             metadata={'trip_id': trip_id}
         )
-
-        payment = Payment.objects.create(
-            trip=trip,
-            amount=amount / 100,
-            currency='usd',
-            payment_id=payment_intent['id'],
-            payment_status="PENDING"
-        )
+        if Bill_Payment.objects.filter(trip=trip,payment_status="PENDING", amount=amount / 100).exists():
+            payment=Bill_Payment.objects.filter(trip=trip,payment_status="PENDING", amount=amount / 100).first()
+            payment.payment_id=payment_intent['id']
+            payment.save()
+        else:
+            payment = Bill_Payment.objects.create(
+                trip=trip,
+                amount=amount / 100,
+                currency='usd',
+                payment_id=payment_intent['id'],
+                payment_status="PENDING"
+            )
 
         return Response({
             'client_secret': payment_intent['client_secret'],
@@ -142,7 +146,7 @@ class WalletPaymentView(APIView):
             pending_amount=amount - wallet_balance
             wallet.balance = 0
             wallet.save()
-            payment = Payment.objects.create(
+            payment = Bill_Payment.objects.create(
             trip=trip,
             driver=driver,
             passenger=customer,
@@ -151,7 +155,7 @@ class WalletPaymentView(APIView):
             payment_status='PAID',
             payment_type='Wallet'
             )
-            pending_billed=Payment.objects.create(trip=trip,amount=pending_amount,currency='usd',payment_status='PENDING',driver=driver,passenger=customer)
+            pending_billed=Bill_Payment.objects.create(trip=trip,amount=pending_amount,currency='usd',payment_status='PENDING',driver=driver,passenger=customer)
             # return Response({"detail": "Insufficient wallet balance."}, status=status.HTTP_400_BAD_REQUEST)
             Transaction.objects.create(
                 user=driver,
@@ -185,7 +189,7 @@ class WalletPaymentView(APIView):
             wallet.balance -= amount
             wallet.save()
 
-            payment = Payment.objects.create(
+            payment = Bill_Payment.objects.create(
                 trip=trip,
                 driver=driver,
                 passenger=customer,
@@ -228,7 +232,7 @@ class CashPaymentView(APIView):
             return Response({"detail": "Trip not found or you are not the customer of this trip."}, status=status.HTTP_404_NOT_FOUND)
 
         # Assuming amount is validated to be the correct fare
-        payment = Payment.objects.create(
+        payment = Bill_Payment.objects.create(
             trip=trip,
             amount=amount,
             currency='usd',
@@ -265,7 +269,7 @@ class StripeWebhookView(APIView):
         if event['type'] == 'payment_intent.succeeded':
             payment_intent = event['data']['object']
             try:
-                payment = Payment.objects.get(payment_id=payment_intent['id'])
+                payment = Bill_Payment.objects.get(payment_id=payment_intent['id'])
                 payment.payment_status = 'PAID'
                 payment.save()
                 trip_id = payment.trip.id
@@ -282,12 +286,12 @@ class StripeWebhookView(APIView):
                 driver_wallet=Wallet.objects.get(user=trip.driver)
                 driver_wallet.balance +=payment.amount
                 driver_wallet.save()
-            except Payment.DoesNotExist:
+            except Bill_Payment.DoesNotExist:
                 pass
         elif event['type'] == 'checkout.session.completed':
             session = event['data']['object']
             try:
-                payment = Payment.objects.get(payment_id=session['id'])
+                payment = Bill_Payment.objects.get(payment_id=session['id'])
                 payment.payment_status = 'PAID'
                 payment.save()
                 trip_id = payment.trip.id
@@ -304,7 +308,7 @@ class StripeWebhookView(APIView):
                 driver_wallet=Wallet.objects.get(user=trip.driver)
                 driver_wallet.balance +=payment.amount
                 driver_wallet.save()
-            except Payment.DoesNotExist:
+            except Bill_Payment.DoesNotExist:
                 pass
         return JsonResponse({'status': 'success'}, status=200)
 
@@ -314,14 +318,16 @@ class DriverTripIncompletePaymentsView(APIView):
     def get(self, request, *args, **kwargs):
         # driver_id = self.kwargs['driver_id']
         incomplete_payment_list=[]
-        incomplete_payment_obj=Payment.objects.filter(driver=request.user, payment_status='PENDING') 
-        if incomplete_payment_obj:
-            for incomplete_payment in incomplete_payment_obj:
+        incomplete_trip_bill_obj=Trip.objects.filter(status='COMPLETED',driver=request.user).exclude(payment_status='paid')
+        # incomplete_payment_obj=Bill_Payment.objects.filter(driver=request.user, payment_status='PENDING') 
+        for incomplete_trip_bill in incomplete_trip_bill_obj:
+            incomplete_payment=Bill_Payment.objects.filter(trip=incomplete_trip_bill, payment_status='PENDING').first()
+            if incomplete_payment:
                 incomplete_payment_data={
                 'trip_id':incomplete_payment.trip.id,
                 "trip_source":incomplete_payment.trip.source,
                 "trip_destination":incomplete_payment.trip.destination,
-                "total_rent":incomplete_payment.trip.total_fare,
+                "total_fare":incomplete_payment.trip.total_fare,
                 "paid_amount":incomplete_payment.trip.total_fare-incomplete_payment.amount,
                 "pending_amount":incomplete_payment.amount,
                 "currency":'usd',
@@ -332,7 +338,23 @@ class DriverTripIncompletePaymentsView(APIView):
                 "passenger_name":incomplete_payment.passenger.first_name + " "  + incomplete_payment.passenger.last_name,
                 "driver_name":incomplete_payment.passenger.phone,
                 }
-                incomplete_payment_list.append(incomplete_payment_data)
+            else:
+                incomplete_payment_data={
+                'trip_id':incomplete_trip_bill.id,
+                "trip_source":incomplete_trip_bill.source,
+                "trip_destination":incomplete_trip_bill.destination,
+                "total_fare":incomplete_trip_bill.total_fare,
+                "paid_amount":0,
+                "pending_amount":incomplete_trip_bill.total_fare,
+                "currency":'usd',
+                "driver_id":incomplete_trip_bill.driver.id,
+                "passenger_id":incomplete_trip_bill.customer.id,
+                "driver_name":incomplete_trip_bill.driver.first_name + " "  + incomplete_trip_bill.driver.last_name,
+                "driver_phone":incomplete_trip_bill.customer.phone,
+                "passenger_name":incomplete_trip_bill.customer.first_name + " "  + incomplete_trip_bill.customer.last_name,
+                "driver_name":incomplete_trip_bill.customer.phone,
+                }
+            incomplete_payment_list.append(incomplete_payment_data)
         return Response(incomplete_payment_list, status=200)
 
 
@@ -341,15 +363,34 @@ class PassengerTripPendingBilledView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     def get(self, request, *args, **kwargs):
         # driver_id = self.kwargs['driver_id']
-    
-        pending_bill=Payment.objects.filter(driver=request.user, payment_status='PENDING').first()
-        if pending_bill:
+        trip_bill=Trip.objects.filter(status='COMPLETED', customer=request.user).exclude(payment_status='paid').first()
+        pending_bill=Bill_Payment.objects.filter(customer=request.user, payment_status='PENDING').first()
+        
+        if trip_bill:
+            pending_bill={
+            "trip_id":trip_bill.id,
+            "source":trip_bill.source,
+            "destination":trip_bill.destination,
+            "time" :trip_bill.time,
+            "distance":trip_bill.distance,
+            "base_fare":trip_bill.rent_price,
+            "waiting_charge":trip_bill.waiting_charge,
+            "waiting_time":trip_bill.waiting_time,
+            "total_fare":trip_bill.total_fare,
+            "payment_type":trip_bill.payment_type,
+            "ride_type":trip_bill.ride_type,
+            "driver_id":trip_bill.driver.id,
+            "driver_name":trip_bill.driver.first_name + " " + trip_bill.driver.last_name,
+            "driver_phone":trip_bill.driver.phone,
+            }
+            return Response(pending_billed_data, status=200, hint="trip_bill")
+        elif pending_bill:
             pending_billed_data={
                 'trip_id':pending_bill.trip.id,
                 "trip_source":pending_bill.trip.source,
                 "trip_destination":pending_bill.trip.destination,
                 "total_rent":pending_bill.trip.total_fare,
-                "paid_amount":pending_bill.trip.total_fare-pending_bill.amount,
+                "paid_amount":pending_bill.trip.total_fare - pending_bill.amount,
                 "pending_amount":pending_bill.amount,
                 "currency":'usd',
                 "driver_id":pending_bill.driver.id,
@@ -359,7 +400,7 @@ class PassengerTripPendingBilledView(APIView):
                 "passenger_name":pending_bill.passenger.first_name + " "  + pending_bill.passenger.last_name,
                 "driver_name":pending_bill.passenger.phone,
                 }
-            return Response(pending_billed_data, status=200)
+            return Response(pending_billed_data, status=status.HTTP_200_OK, hint="pending_bill")
         else:
-            return Response({}, status=200)      
+            return Response(status=status.HTTP_400_BAD_REQUEST, hint="no_bill")      
                 

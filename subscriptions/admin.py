@@ -14,17 +14,17 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
 
 @admin.register(Subscriptions)
 class SubscriptionsAdmin(admin.ModelAdmin):
-    list_display = ('driver', 'plan', 'pay_amount', 'subcribe_date', 'expire_date', 'payment_status', 'is_active')
+    list_display = ('driver', 'plan', 'pay_amount', 'subcribe_date', 'expire_date', 'payment_status', 'is_active', 'payment_id')
     list_filter = ('payment_status', 'is_active', 'subcribe_date')
-    # search_fields = ('driver__username', 'plan__plan_name', 'payment_id')
+    search_fields = ('driver__phone', 'plan__plan_name', 'payment_id')
     date_hierarchy = 'subcribe_date'
 
 
 @admin.register(Subscription_Logs)
 class SubscriptionLogsAdmin(admin.ModelAdmin):
-    list_display = ('driver', 'plan', 'pay_amount', 'subcribe_date', 'expire_date', 'payment_status', 'is_active')
+    list_display = ('driver', 'plan', 'pay_amount', 'subcribe_date', 'expire_date', 'payment_status', 'is_active', "payment_id")
     list_filter = ('payment_status', 'is_active', 'subcribe_date')
-    search_fields = ('driver__username', 'plan__plan_name', 'payment_id')
+    search_fields = ('driver__phone', 'plan__plan_name', 'payment_id')
     date_hierarchy = 'subcribe_date'
 
 

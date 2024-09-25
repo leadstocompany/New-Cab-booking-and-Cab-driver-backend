@@ -387,3 +387,29 @@ class UserTransactionListView(generics.ListAPIView):
 #             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 #         except Exception as e:
 #             return Response({'error': 'An error occurred during transfer'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+# class WalletListView(generics.ListAPIView):
+#     permission_classes = [IsAdminOrSuperuser]
+#     queryset = Wallet.objects.all()
+#     serializer_class = WalletSerializer
+
+class DriverWalletListView(generics.ListAPIView):
+    permission_classes = [IsAdminOrSuperuser]
+    serializer_class = WalletSerializer
+
+    def get_queryset(self):
+        # Filtering users by type "DRIVER" from your custom User model
+        return Wallet.objects.filter(user__type=User.Types.DRIVER)
+
+
+class CustomerWalletListView(generics.ListAPIView):
+    permission_classes = [IsAdminOrSuperuser]
+    serializer_class = WalletSerializer
+
+    def get_queryset(self):
+        # Filtering users by type "DRIVER" from your custom User model
+        return Wallet.objects.filter(user__type=User.Types.CUSTOMER)
+

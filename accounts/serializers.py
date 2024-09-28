@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from accounts.models import *
 class UserAuthSerializer(serializers.Serializer):
     phone = serializers.CharField()
@@ -38,19 +39,35 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 
 class DriverProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
+    phone = serializers.CharField()
 
+   
     def validate_email(self, value):
         lower_email = value.lower()
-        if User.objects.filter(email__iexact=lower_email).exists():
+        
+        # Get the current instance if it's provided (update scenario)
+        instance = self.instance
+        
+        # Check if the email is already used by any other user except the current one
+        if User.objects.filter(email__iexact=lower_email).exclude(pk=instance.pk).exists():
             raise serializers.ValidationError("Email ID already used!")
+
         return lower_email
+    
+    def validate_phone(self, value):
+        print(value)
+        instance = self.instance
+        # Ensure that the phone number is unique
+        if User.objects.filter(phone=value).exclude(pk=instance.pk).exists():
+            raise serializers.ValidationError("Phone number already used!")
+        return value
 
     class Meta:
         model = Driver
         fields = ('id','first_name', 'last_name', 'phone', 'email', 'full_address', 'pincode',
                     'state', 'city', 'house_or_building', 'road_or_area', 'alternate_number','user_doc',
-                    'photo_upload', 'terms_policy', 'myride_insurance', 'latitude', 'longitude')
-
+                    'photo_upload', 'terms_policy', 'myride_insurance', 'latitude', 'longitude', 'profile_status', 'rejection_reason', 'driver_duty')
+        read_only_fields = ('profile_status', 'rejection_reason','driver_duty') 
 class DriverResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     confim_password = serializers.CharField(required=True)
@@ -69,7 +86,22 @@ class DriverResetPasswordSerializer(serializers.Serializer):
     #     return super(UserSerializer, self).create(validated_data)
 
 
+# class BankAccountSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = BankAccount
+#         fields = '__all__'
+
 class BankAccountSerializer(serializers.ModelSerializer):
+    # Adding unique validation on account_number and ifsc_code
+    account_number = serializers.CharField(
+        max_length=50, 
+        validators=[UniqueValidator(queryset=BankAccount.objects.all(), message="Account number already exists!")]
+    )
+    swift_code = serializers.CharField(
+        max_length=50, 
+        validators=[UniqueValidator(queryset=BankAccount.objects.all(), message="IFSC code already exists!")]
+    )
+
     class Meta:
         model = BankAccount
         fields = '__all__'
@@ -79,3 +111,11 @@ class CurrentLocationSerializer(serializers.ModelSerializer):
         model = CurrentLocation
         fields = ['current_latitude', 'current_longitude', 'timestamp']
         # read_only_fields = ['timestamp']
+
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ('id','first_name', 'last_name', 'phone', 'email', 'birth_day', 'gender', 'photo_upload', 'type')

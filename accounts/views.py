@@ -10,12 +10,14 @@ from utility.otp import send_otp
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.conf import settings
-from admin_api.models import VehicleCertificateField, UserDocumentField
-from admin_api.serializers import VehicleCertificateFieldSerializer,UserDocumentFieldSerializer
+from admin_api.models import VehicleCertificateField, UserDocumentField, VehiclePhotoPage, City
+from admin_api.serializers import  CitySerializer, VehicleCertificateFieldSerializer,UserDocumentFieldSerializer, VehiclePhotoPageSerializer
 from rest_framework import viewsets
 from accounts.serializers import *
 from rest_framework.views import APIView
-
+from JLP_MyRide import settings
+import stripe
+stripe.api_key = settings.STRIPE_SECRET_KEY
 # Create your views here.
 
 
@@ -31,7 +33,10 @@ class FileUploadAPI(views.APIView):
             context={'request': request})
         if serializer.is_valid(raise_exception=True):
             instance = serializer.save()
+           
             url = f'{settings.SERVER_URL}{instance.file.url}'
+            print("url")
+
             return Response({"url": url}, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -238,6 +243,13 @@ class ActiveVehicleCertificateFieldList(generics.ListAPIView):
 
     def get_queryset(self):
         return VehicleCertificateField.objects.filter(active=True)
+    
+class ActiveVehiclePhotoPageList(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = VehiclePhotoPageSerializer
+
+    def get_queryset(self):
+        return VehiclePhotoPage.objects.filter(active=True)
 
 class ActiveUserDocumentFieldList(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -247,12 +259,47 @@ class ActiveUserDocumentFieldList(generics.ListAPIView):
         return UserDocumentField.objects.filter(active=True)
 
 
+# class BankAccountCreateAPIView(generics.CreateAPIView):
+#     permission_classes = (permissions.IsAuthenticated,)
+#     queryset = BankAccount.objects.all()
+#     serializer_class = BankAccountSerializer
+
 class BankAccountCreateAPIView(generics.CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = BankAccount.objects.all()
     serializer_class = BankAccountSerializer
+    
+    def create(self, request, *args, **kwargs):
+        # Generate or modify account_id
+        # Create a mutable copy of the request data
+        data = request.data
+        # Update the account_id field
+        try:
+            bank_account = stripe.Token.create(
+                bank_account={
+                    "country": "US",
+                    "currency": "usd",
+                    "account_holder_name": data['name'],
+                    "account_holder_type": "individual",  # Or "company"
+                    "routing_number": data['routing_number'],
+                    "account_number": data['account_number'],
+                },
+            )
+            external_account = stripe.Account.create_external_account(
+                "acct_1PR5HtICrH978laK",  # Replace with your admin's Stripe account ID
+                external_account=bank_account.id
+                )
+            data['account_id'] = external_account.id
+        except Exception as e:
+            pass
 
+        # Validate and save the object using the serializer
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
 
+        # Return the serialized data with the updated account_id field
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 class DriverBankAccountAPIView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     def get(self, request, format=None):
@@ -275,11 +322,35 @@ class UpdateDriverBankAccountAPIView(APIView):
             return None
     def patch(self, request,format=None):
         driver_id = request.user.id
-        bank_account = self.get_object(driver_id)
-        if not bank_account:
+        bank_account_detail = self.get_object(driver_id)
+        if not bank_account_detail:
             return Response({"error": "Bank account not found for this driver."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            if bank_account_detail.account_id:
+                stripe.Account.delete_external_account(
+                    "acct_ADMIN_ACCOUNT_ID",  # Replace with your admin's Stripe account ID
+                    bank_account_detail.account_id
+                )
+            account_token = stripe.Token.create(
+                 bank_account={
+                    "country": "US",
+                    "currency": "usd",
+                    "account_holder_name": request.data['name'],
+                    "account_holder_type": "individual",  # Or "company"
+                    "routing_number": request.data['routing_number'],
+                    "account_number": request.data['account_number'],
+                },
+            )
+            external_account = stripe.Account.create_external_account(
+                "acct_ADMIN_ACCOUNT_ID",  # Admin's Stripe account ID
+                external_account=account_token.id
+            )
+            request.data['account_id'] = external_account.id
 
-        serializer = BankAccountSerializer(bank_account, data=request.data, partial=True)
+        except Exception as e:
+            pass
+
+        serializer = BankAccountSerializer(bank_account_detail, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -287,18 +358,111 @@ class UpdateDriverBankAccountAPIView(APIView):
 
 
 
-class CurrentUserLocationView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+# class CurrentUserLocationView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request):
-        current_location, created = CurrentLocation.objects.get_or_create(user=request.user)
-        serializer = CurrentLocationSerializer(current_location)
-        return Response(serializer.data)
+#     def get(self, request):
+#         current_location, created = CurrentLocation.objects.get_or_create(user=request.user)
+#         serializer = CurrentLocationSerializer(current_location)
+#         return Response(serializer.data)
 
-    def put(self, request):
-        current_location, created = CurrentLocation.objects.get_or_create(user=request.user)
-        serializer = CurrentLocationSerializer(current_location, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
+#     def put(self, request):
+#         current_location, created = CurrentLocation.objects.get_or_create(user=request.user)
+#         serializer = CurrentLocationSerializer(current_location, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=400)
+
+
+# class CurrentLocationCreateView(generics.CreateAPIView):
+#     queryset = CurrentLocation.objects.all()
+#     serializer_class = CurrentLocationSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def perform_create(self, serializer):
+#         user = self.request.user
+#         serializer.save(user=user)
+
+# class CurrentLocationUpdateView(generics.UpdateAPIView):
+#     queryset = CurrentLocation.objects.all()
+#     serializer_class = CurrentLocationSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     lookup_field = 'user_id'
+
+#     def get_object(self):
+#         user = self.request.user
+#         return CurrentLocation.objects.get(user=user)
+
+# class CurrentLocationDetailView(generics.RetrieveAPIView):
+#     queryset = CurrentLocation.objects.all()
+#     serializer_class = CurrentLocationSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     lookup_field = 'user_id'
+
+#     def get_object(self):
+#         user = self.request.user
+#         return CurrentLocation.objects.get(user=user)
+from django.utils import timezone
+class CurrentLocationAPIView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def post(self, request):
+        user = request.user
+        latitude = request.data.get('current_latitude')
+        longitude = request.data.get('current_longitude')
+
+        if not latitude or not longitude:
+            return Response({"error": "Latitude and Longitude are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            location = CurrentLocation.objects.get(user=user)
+            location.current_latitude = latitude
+            location.current_longitude = longitude
+            location.timestamp=timezone.now()
+            location.save()
+            serializer = CurrentLocationSerializer(location)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CurrentLocation.DoesNotExist:
+            location = CurrentLocation.objects.create(user=user, current_latitude=latitude, current_longitude=longitude)
+            serializer = CurrentLocationSerializer(location)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ActiveCityListView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = CitySerializer
+
+    def get_queryset(self):
+        return City.objects.filter(active=True)
+
+
+class SaveFCMTokenView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def post(self, request):
+        try:
+            fcm_token = request.data.get('fcm_token')
+            if fcm_token:
+                user=User.objects.get(id=request.user.id)
+                user.fcm_token=fcm_token
+                user.save()
+                return Response({"fcm_token":user.fcm_token}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error":"fcm_token field required"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
+
+class DriverDutyOnOffView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def post(self, request):
+        try:
+            driver_duty = request.data.get('driver_duty')
+            if driver_duty:
+                driver=Driver.objects.get(id=request.user.id)
+                driver.driver_duty=driver_duty
+                driver.save()
+                return Response({"id":driver.id, "driver_duty":driver.driver_duty}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error":"driver_duty field required"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
+

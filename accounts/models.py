@@ -1,25 +1,42 @@
 # Create your models here.
 from base64 import b32encode
 
-from django.contrib.auth.base_user import BaseUserManager
+# from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db import IntegrityError, transaction
 from django.utils.crypto import get_random_string
 
 from utility.model import BaseModel
-
-
 def create_ref_code():
-    while 1:
+    while True:
+        # Generate a random 5-character string
         referral_cde = get_random_string(5).upper()
-        if referral_cde not in list(User.objects.values_list('code', flat=True)):
-            print(referral_cde)
-            return referral_cde
-            break
-        else:
-            continue
+        try:
+            # Try to save it to the database inside a transaction
+            with transaction.atomic():
+                # Ensure that the referral code is unique at the time of insertion
+                if not User.objects.filter(code=referral_cde).exists():
+                    return referral_cde
+        except IntegrityError:
+            # Handle the case where a race condition caused a duplicate entry
+            continue  # Retry with a new code
+
+# def create_ref_code():
+#     while True:
+#         referral_cde = get_random_string(5).upper()
+#         print(referral_cde)
+#         if referral_cde not in list(User.objects.values_list('code', flat=True)):
+#             print(referral_cde)
+#             # break
+#             return referral_cde
+#             # break
+#         else:
+#             continue
 
 
 class UserManager(UserManager):
@@ -108,7 +125,10 @@ class User(AbstractUser):
     terms_policy = models.BooleanField(default=False)
     myride_insurance = models.BooleanField(default=False)
     driver_duty = models.BooleanField(default=False)
-
+    profile_status = models.CharField(choices=(('Pending', 'Pending'), ('Approve', 'Approve'), ('Rejected', 'Rejected'),
+                              ('Block', 'Block')), max_length=74, default="Pending")
+    rejection_reason = models.TextField(null=True, blank=True)
+    fcm_token=models.TextField(null=True, blank=True)
 
     USERNAME_FIELD = "phone"
     REQUIRED_FIELDS = []
@@ -132,6 +152,8 @@ class Admin(User):
 
     def save(self, *args, **kwargs):
         self.type = User.Types.ADMIN
+        if not self.code:
+            self.code = create_ref_code()
         return super().save(*args, **kwargs)
 class Driver(User):
     objects = DriverManager()
@@ -143,7 +165,12 @@ class Driver(User):
         self.type = User.Types.DRIVER
         # self.is_driver = True
         self.driver_duty = True
+        if not self.code:
+            self.code = create_ref_code()
         return super().save(*args, **kwargs)
+      
+       
+      
 
 
 class Customer(User):
@@ -154,7 +181,8 @@ class Customer(User):
 
     def save(self, *args, **kwargs):
         self.type = User.Types.CUSTOMER
-        self.is_customer = True
+        if not self.code:
+            self.code = create_ref_code()
         return super().save(*args, **kwargs)
 
 
@@ -218,18 +246,20 @@ class CustomerReferral(BaseModel):
 class BankAccount(BaseModel):
     driver = models.ForeignKey(Driver, related_name='backaccount',
                                on_delete=models.PROTECT)
-    name=models.CharField(max_length=200, unique=True)
+    name=models.CharField(max_length=200)
     account_number=models.CharField(max_length=25, unique=True)
-    ifsc_code=models.CharField(max_length=35, unique=True)
-    bank_name=models.CharField(max_length=200, unique=True)
+    swift_code=models.CharField(max_length=35, unique=True)
+    routing_number=models.CharField(_("routing number"), max_length=100, blank=True)
+    bank_name=models.CharField(max_length=200)
+    account_id=models.CharField(max_length=1000,null=True, blank=True)
     def __str__(self):
         return f'{self.name} - {self.bank_name}'
 
 
 class CurrentLocation(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    current_latitude = models.DecimalField(max_digits=9, decimal_places=6)
-    current_longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    current_latitude = models.CharField(max_length=50, null=True, blank=True)
+    current_longitude = models.CharField(max_length=50, null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -250,10 +280,10 @@ def print_only_after_deal_created(sender, instance, created, **kwargs):
 
 
 
-@receiver(post_save, sender=User)
-def create_user_current_location(sender, instance, created, **kwargs):
-    if created:
-        CurrentLocation.objects.create(user=instance)
+# @receiver(post_save, sender=User)
+# def create_user_current_location(sender, instance, created, **kwargs):
+#     if created:
+#         CurrentLocation.objects.create(user=instance)
 
 # @receiver(post_save, sender=User)
 # def save_user_current_location(sender, instance, **kwargs):

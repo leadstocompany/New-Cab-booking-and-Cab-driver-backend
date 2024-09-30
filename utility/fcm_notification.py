@@ -37,15 +37,25 @@
 
 import firebase_admin
 from firebase_admin import credentials, messaging
-
-# Path to your service account key JSON file
-cred = credentials.Certificate('jomlah-cab-app-firebase-adminsdk-6alay-32a4d2af4c.json')
-
-# Initialize the Firebase app with the service account credentials
-firebase_admin.initialize_app(cred)
+import os
 
 # Function to send a notification
-def send_push_notification(fcm_token, title, body,data):
+def send_fcm_notification(fcm_token, title, body, data):
+        
+    # # Get the directory of the current script file
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+  
+    # Join the directory path with the JSON filename
+    json_file_path = os.path.join(dir_path, 'jomlah-cab-app-firebase-adminsdk-6alay-32a4d2af4c.json')
+
+    print(json_file_path,"yes")
+    # Path to your service account key JSON file
+    cred = credentials.Certificate(json_file_path)
+
+    # Initialize the Firebase app with the service account credentials
+    firebase_admin.initialize_app(cred)
+
+    
     # Create a message
     message = messaging.Message(
         notification=messaging.Notification(
@@ -59,3 +69,6 @@ def send_push_notification(fcm_token, title, body,data):
     # Send the message
     response = messaging.send(message)
     print('Successfully sent message:', response)
+    return response
+
+# pip install firebase-admin apscheduler

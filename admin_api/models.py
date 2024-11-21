@@ -30,3 +30,22 @@ class FeedbackSetting(models.Model):
         return self.title
 
 
+class DriverFeedbackPage(models.Model):
+    title=models.CharField(max_length=500)
+    description=models.CharField(max_length=500, null=True, blank=True)
+    active=models.BooleanField(default=True)
+    def __str__(self):
+        return self.title
+    
+
+class VehiclePhotoPage(models.Model):
+    field_name=models.CharField(max_length=500, unique=True)
+    active=models.BooleanField(default=True)
+    def __str__(self):
+        return self.field_name
+
+
+class City(BaseModel):
+    city_name=models.CharField(max_length=500, unique=True)
+    def __str__(self):
+        return self.city_name

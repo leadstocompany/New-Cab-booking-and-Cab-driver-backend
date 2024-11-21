@@ -6,7 +6,7 @@ class CabTypeSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CabType
-        fields = ('id', 'cab_type')
+        fields = ('id', 'cab_type', 'icon')
 
 class CabClassSerializer(serializers.ModelSerializer):
     
@@ -28,7 +28,8 @@ class VehicleLocationUpdateSerializer(serializers.ModelSerializer):
 class VehicleMakerSerializer(serializers.ModelSerializer):
     class Meta:
         model = VehicleMaker
-        fields = ['id', 'maker', 'cab_type']
+        fields = ['id', 'maker', 'cab_type', 'icon']
+        #fields = ['id', 'maker', 'icon']
     def to_representation(self, instance):
         self.fields['cab_type'] = CabTypeSerializer(read_only=True)
         return super(VehicleMakerSerializer, self).to_representation(instance)
@@ -36,9 +37,11 @@ class VehicleMakerSerializer(serializers.ModelSerializer):
 class VehicleModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = VehicleModel
-        fields = ['id', 'maker', 'model', "model_image", "is_active"]
+        fields = ['id','cabtype','cabclass', 'maker', 'model', "model_image", "is_active"]
     
     def to_representation(self, instance):
+        self.fields['cabtype'] = CabTypeSerializer(read_only=True)
+        self.fields['cabclass'] = CabClassSerializer(read_only=True)
         self.fields['maker'] = VehicleMakerSerializer(read_only=True)
         return super(VehicleModelSerializer, self).to_representation(instance)
 
@@ -63,69 +66,84 @@ class VehicaleDetailsSerializer(serializers.ModelSerializer):
         return super(VehicaleDetailsSerializer, self).to_representation(instance)
 
     def _get_set_cab_class(self, validated_data):
-        cab_type_id = validated_data.get('cab_type')
+        cab_type_id = validated_data.get('cab_type').id
+        print(cab_type_id,"cab_id")
         cab_type_obj=CabType.objects.get(id=cab_type_id)
         cabtype_name=cab_type_obj.cab_type
-        cab_class=None 
-        economy=('Toyota Corolla', 'Honda Civic', 'Hyundai Elantra', 'Nissan Sentra', 'Mazda3', 'Honda Fit', 'Toyota Yaris',
- 'Hyundai Accent', 'Kia Rio', 'Chevrolet Spark', 'Ford Fiesta', 'Volkswagen Golf', 'Honda Civic Hatchback', 'Toyota Prius C', 'Mini Cooper',
- 'Chevrolet Cruze', 'Ford Focus', 'Kia Forte', 'Nissan Versa', 'Mitsubishi Mirage G4')
-        sedans=('BMW 5 Series', 'Audi A6', 'Lexus ES', 'Jaguar XF', 'Chevrolet Impala', 'Chrysler 300',  'BMW 7 Series', 'Audi A8', 'Lexus LS',
-'Toyota Avalon', 'Ford Taurus', 'Dodge Charger', 'BMW M3', 'Audi S4', 'Mercedes-AMG C63', 'Cadillac CTS-V', 'Alfa Romeo Giulia Quadrifoglio')
-        confort=('Mercedes-Benz S-Class', 'BMW 7 Series', 'Audi A8', 'Lexus LS', 'Genesis G90', 'Mercedes-Benz E-Class', 'BMW 5 Series', 
-            'Audi A6', 'Lexus ES', 'Volvo S90', 'Cadillac Escalade', 'Lincoln Navigator', 'Mercedes-Benz GLS-Class', 'BMW X7', 
-            'Range Rover', 'Lexus RX', 'Acura MDX', 'Audi Q7', 'BMW X5', 'Volvo XC90', 'Mazda CX-5', 'Honda CR-V', 'Toyota Highlander', 'Subaru Outback',
-            'Kia TelluridePorsche Macan', 'Jaguar F-Pace', 'Audi Q5', 'Mercedes-Benz GLC', 'Lexus NX')
-        taxi_5_seater=('Toyota Camry', 'Honda Accord', 'Hyundai Sonata', 'Nissan Altima', 'Ford Fusion', 'Toyota Corolla', 'Honda Civic', 'Hyundai Elantra', 
-        'Nissan Sentra', 'Mazda3', 'Hybrid Models', 'Toyota Prius', 'Honda Insight', 'Ford Fusion Hybrid', 'Hyundai Ioniq', 'Toyota Camry Hybrid', 'Toyota RAV4', 'Honda CR-V',
-        'Nissan Rogue', 'Hyundai Tucson', 'Mazda CX-5', 'Nissan Leaf', 'Chevrolet Bolt EV', 'Tesla Model 3', 'Hyundai Kona Electric', 'Kia Soul EV')
-        taxi_7_seater=('Toyota Sienna', 'Honda Odyssey', 'Chrysler Pacifica', 'Kia Carnival', 'Dodge Grand Caravan', 'Toyota Highlander',
- 'Honda Pilot', 'Ford ExplorerChevrolet Traverse','Hyundai Palisade', 'Volkswagen Sharan', 'Ford Galaxy',
- 'Citroën Grand C4 SpaceTourer', 'Peugeot 5008', 'Kia SorentoMercedes-Benz V-Class', 'BMW X7', 'Audi Q7', 'Volvo XC90', 'Lexus RX L')
+        cabClass=None 
+#        
         if cabtype_name == "Bick":
             if CabClass.objects.filter(cab_class="Bick").exists():
-                cabclass=CabClass.objects.filter(cab_class="Bick").first()
-            else:
-                cabclass=CabClass.objects.create(cab_class="Bick", cab_type=cab_type_obj)
-            cab_class=cabclass
+                cabClass=CabClass.objects.filter(cab_class="Bick", cab_type=validated_data.get('cab_type')).first()
+            # else:
+            #     cabclass=CabClass.objects.create(cab_class="Bick", cab_type=cab_type_id)
+            # cab_class=cabclass
         elif cabtype_name == "Auto":
             if CabClass.objects.filter(cab_class="Auto").exists():
-                cabclass=CabClass.objects.filter(cab_class="Auto").first()
-            else:
-                cabclass=CabClass.objects.create(cab_class="Auto", cab_type=cab_type_obj)
-            cab_class=cabclass
+                cabClass=CabClass.objects.filter(cab_class="Auto",cab_type=validated_data.get('cab_type')).first()
+            # else:
+            #     cabclass=CabClass.objects.create(cab_class="Auto", cab_type=cab_type_id)
+            # cab_class=cabclass
         else:
-            cabmodel_id=validated_data.get('cab_model')
+           
+            cabmodel_id=validated_data.get('model').id
             cabmodel_obj=VehicleModel.objects.get(id=cabmodel_id)
             cabmodel_name=cabmodel_obj.model
-            if cabmodel_name in economy:
-                vehicle_class_name="Economy"
-            elif cabmodel_name in sedans:
-                vehicle_class_name="Sedans"
-            elif cabmodel_name in taxi_7_seater:
-                vehicle_class_name="Taxi 7-seater"
-            elif cabmodel_name in confort:
-                vehicle_class_name="Confort"
-            elif cabmodel_name in taxi_5_seater:
-                vehicle_class_name="Taxi 5-seater"
-            else:
-                vehicle_class_name="Economy"
-            cabclass=CabClass.objects.filter(cab_class=vehicle_class_name).first()
-            cab_class=cabclass
-        validated_data['cab_class'] = cab_class
+            AllvehicleClass=CabClass.objects.all()
+            for cab_class in AllvehicleClass:
+                cabModels_list=VehicleModel.objects.filter(cabclass=cab_class, cabtype=validated_data.get('cab_type'),maker=validated_data.get('maker'))
+                # Get the list of IDs
+                cabModels_ids = cabModels_list.values_list('id', flat=True)
+                if cabmodel_id in cabModels_ids:
+                    cabClass=cab_class
+                    break
+
+
+          
+        validated_data['cab_class'] = cabClass
         return validated_data
        
 class CabBookingPriceSerializer(serializers.ModelSerializer):
-    # cab_class = CabClassSerializer(many=True)
     class Meta:
         model = CabBookingPrice
         fields = '__all__'
+
     def to_representation(self, instance):
-        self.fields['cab_class'] =  CabClassSerializer(read_only=True)
+        # Dynamically assign the nested serializer for cab_class
+        self.fields['cab_class'] = CabClassSerializer(read_only=True)
         return super(CabBookingPriceSerializer, self).to_representation(instance)
 
+    def validate(self, data):
+        # Check if a CabBookingPrice already exists for the given cab_class
+        cab_class = data.get('cab_class')
+        if self.instance:  # If updating
+            # Exclude the current instance from the unique check
+            if CabBookingPrice.objects.filter(cab_class=cab_class).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("This cab class already has a price entry.")
+        else:  # If creating a new instance
+            if CabBookingPrice.objects.filter(cab_class=cab_class).exists():
+                raise serializers.ValidationError("This cab class already has a price entry.")
+        return data
 
 
+# class CabBookingPriceSerializer(serializers.ModelSerializer):
+#     cab_class = CabClassSerializer(read_only=True)  # Nested serializer for cab_class
+
+#     class Meta:
+#         model = CabBookingPrice
+#         fields = ['id', 'cab_class', 'base_fare', 'waiting_fare_per_minute']
+#         unique_together = ['cab_class']  # Ensure unique constraint on cab_class
+
+#     def to_representation(self, instance):
+#         """Custom representation to ensure unique cab_class serialization."""
+#         representation = super().to_representation(instance)
+#         cab_class_id = instance.cab_class_id
+#         # Add any custom logic to ensure cab_class uniqueness
+#         representation['cab_class'] = {
+#             'id': cab_class_id,
+#             'name': instance.cab_class.cab_class  # Assuming 'name' is a field in CabClass
+#         }
+#         return representation
 class NearestDriverSerializer(serializers.ModelSerializer):
     vehicles = VehicaleDetailsSerializer(many=True, read_only=True)
     current_location = CurrentLocationSerializer(read_only=True)

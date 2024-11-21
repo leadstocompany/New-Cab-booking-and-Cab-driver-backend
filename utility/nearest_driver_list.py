@@ -8,11 +8,12 @@ from django.core.mail import send_mail
 from decimal import Decimal
 from datetime import datetime, timedelta
 import requests
-
+import logging
+logger = logging.getLogger(__name__)
 def get_nearest_driver_list(trip_id, latitude, longitude):
     try:
         trip = Trip.objects.get(id=trip_id)
-        max_distance = 5.0  # This could be made dynamic
+        max_distance = 15.0  # This could be made dynamic
         radius = 6371  # Earth's radius in kilometers
 
         def haversine(lat1, lon1, lat2, lon2):
@@ -48,12 +49,10 @@ def get_nearest_driver_list(trip_id, latitude, longitude):
                         if distance <= max_distance:
                             nearby_drivers.append(driver)
                     
-            except CurrentLocation.DoesNotExist:
+            except CurrentLocation.DoesNotExist as e:
+                logger.error(f"Error occurred: {e}")
                 continue
-        # # Notify drivers
-        # for driver in nearby_drivers:
-        #     print("yes")
-        #     booking_request_notify_driver(driver, trip, scheduled_datetime)
+        logger.debug("Processing data: nearst drivers list")
         return nearby_drivers
     except Exception as e:
-        print("celery error :", e)
+        logger.error(f"Error occurred: {e}")

@@ -13,11 +13,12 @@ urlpatterns = [
    
     path('subscription-plans/', views.ActiveSubscriptionPlanListView.as_view(), name='subscription-plan'),
     path('subscription/driver/<int:driver_id>/', views.SubscriptionDetailView.as_view(), name='driver-subscription-detail'),
-    path('drivers/<int:driver_id>/subscriptions/<int:plan_id>/pay/', views.SubscriptionCreateView.as_view(), name='subscription-pay'),
-
+    
     path('drivers/<int:driver_id>/subscriptions/<int:plan_id>/payment-intent/pay/', views.SubscriptionPaymentIntentView.as_view(), name='subscription-pay'),
+    
+    path('drivers/subscription/payment-success/', views.UpdateSubscriptionStatusView.as_view(), name='payment-success'),
 
-    path('drivers/subscriptions/webhook/', views.DriverSubscriptionStripeWebhookView.as_view(), name='subscriptions-webhook'),
+    # path('drivers/subscriptions/payment/webhook/', views.DriverSubscriptionStripeWebhookView.as_view(), name='subscriptions-webhook'),
 
-     
+    # api/subscription/payment-success/ 
 ]

@@ -9,7 +9,9 @@ from trips.models import *
 from trips.serializers import *
 from admin_api.serializers import FeedbackSettingSerializer, DriverFeedbackPageSerializer
 from admin_api.models import FeedbackSetting, DriverFeedbackPage
-from trips.tasks import booking_request_notify_drivers, notify_trip_accepted, notify_trip_cancelled, notify_trip_started,  notify_trip_completed, send_trip_schedule_notification
+from trips.tasks import booking_request_notify_drivers, notify_trip_accepted, notify_trip_cancelled, notify_trip_started,  notify_trip_completed, send_trip_schedule_notification, notify_arrived_at_pickup,notify_trip_request_cancel
+from trips.fcm_notified_task import fcm_push_notification_trip_booking_request_to_drivers, fcm_push_notification_trip_accepted, fcm_push_notification_trip_cancelled, fcm_push_notification_trip_started, fcm_push_notification_trip_completed, fcm_push_notification_arrived_at_pickup, send_fcm_notification_schedule
+from utility.nearest_driver_list import get_nearest_driver_list
 import random
 from utility.pagination import CustomPagination
 from JLP_MyRide import settings
@@ -17,6 +19,10 @@ from django.utils import timezone
 from django.db.models import Sum
 from datetime import datetime, timedelta
 import stripe
+import json
+from utility.rating import get_driver_rating
+import logging
+logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Create your views here.
@@ -62,6 +68,7 @@ class BookingRequestView(APIView):
         trip_rent_price = request.data.get('trip_rent_price')
         scheduled_datetime=request.data.get('scheduled_datetime', None)
         payment_type= request.data.get('payment_type')
+        distance=request.data.get('distance')
         otp = str(random.randint(1000, 9999))
         
         # Create trip request
@@ -79,17 +86,23 @@ class BookingRequestView(APIView):
             dropup_longitude= dropup_longitude,
             scheduled_datetime=scheduled_datetime,
             payment_type=payment_type,
+            distance=distance
         )
 
         # Notify drivers asynchronously
-        booking_request_notify_drivers.delay(trip.id, pickup_latitude, pickup_longitude, scheduled_datetime)
-        # response_data =notify_drivers(trip.id, pickup_latitude, pickup_longitude, scheduled_datetime)
+        drivers=get_nearest_driver_list(trip.id, pickup_latitude, pickup_longitude)
+        driver_ids = [driver.id for driver in drivers]
+        fcm_push_notification_trip_booking_request_to_drivers(trip.id,drivers, scheduled_datetime)
+        booking_request_notify_drivers.delay(trip.id,driver_ids, scheduled_datetime)
+        # fcm_push_notification_trip_booking_request_to_drivers(trip.id,drivers, scheduled_datetime)
+       
         return Response({"detail": "Booking request sent to nearest drivers.", "otp":otp, 'trip_id':trip.id}, status=status.HTTP_200_OK)
 
 class AcceptTripView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     def post(self, request, *args, **kwargs):
         trip_id = request.data.get('trip_id')
+        
         driver= request.user
         cab=Vehicle.objects.filter(driver=driver).first()
         trip = Trip.objects.get(id=trip_id)
@@ -100,14 +113,16 @@ class AcceptTripView(APIView):
         trip.cab=cab
         trip.status = 'BOOKED'
         trip.save()
-
+        fcm_push_notification_trip_accepted(trip_id)
         notify_trip_accepted.delay(trip_id)
         # respoinse=notify_trip_accepted(trip_id)
         if trip.scheduled_datetime:
-            scheduled_datetime = datetime.strptime(trip.scheduled_datetime, '%Y-%m-%d %H:%M:%S')
+            send_fcm_notification_schedule(trip_id)
+            
+            # scheduled_datetime = datetime.strptime(trip.scheduled_datetime, '%Y-%m-%d %H:%M:%S')
             send_trip_schedule_notification.apply_async(
                 (trip.id,),
-                eta=scheduled_datetime - timedelta(hours=1)
+                eta=trip.scheduled_datetime - timedelta(hours=1)
             )
 
         return Response({"detail": "Trip accepted successfully."}, status=status.HTTP_200_OK)
@@ -128,14 +143,25 @@ class CancelTripView(APIView):
                 trip.cancel_reason = cancel_reason
                 trip.save()
                 if user.type == User.Types.DRIVER:
+                    fcm_push_notification_trip_cancelled(trip_id,'customer', cancel_reason)
                     notify_trip_cancelled.delay(trip.id, trip.customer.id, 'customer', cancel_reason)
+                    
                 else:
-                    notify_trip_cancelled.delay(trip.id, trip.driver.id, 'driver', cancel_reason)
+                    if trip.driver:
+                        fcm_push_notification_trip_cancelled(trip_id,'driver', cancel_reason)
+                        notify_trip_cancelled.delay(trip.id, trip.driver.id, 'driver', cancel_reason)
+                    else:
+                        drivers=get_nearest_driver_list(trip.id, trip.pickup_latitude, trip.pickup_longitude)
+                        driver_ids = [driver.id for driver in drivers]
+                        notify_trip_request_cancel.delay(trip.id, driver_ids, cancel_reason)
+
                 return Response({"detail": "Trip cancelled successfully."}, status=status.HTTP_200_OK)
             else:
                 return Response({"detail": "Trip cannot be cancelled."}, status=status.HTTP_400_BAD_REQUEST)
         except Trip.DoesNotExist:
+            logger.error(f"Trip does not exist")
             return Response({"detail": "Trip does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        
 
 
 
@@ -151,13 +177,16 @@ class VerifyOTPAndStartTripView(APIView):
             if trip.status == "BOOKED" and trip.driver==driver:
                 if trip.otp == otp:
                     trip.status = 'ON_TRIP'
+                    trip.ride_start_time=timezone.localtime(timezone.now())
                     trip.save()
+                    fcm_push_notification_trip_started(trip_id)
                     notify_trip_started.delay(trip_id)
                     # notify_trip_started(trip_id)
                     return Response({"detail": "Trip started successfully."}, status=status.HTTP_200_OK)
             else:
                 return Response({"detail": "Invalid OTP."}, status=status.HTTP_400_BAD_REQUEST)
         except Trip.DoesNotExist:
+            logger.error(f"Trip does not exist")
             return Response({"detail": "Trip does not exist or you are not authorized to start this trip."}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -172,53 +201,81 @@ class CompleteTripView(APIView):
             trip = Trip.objects.get(id=trip_id)
             if trip.status == 'ON_TRIP' and trip.driver == user:
                 trip.status = 'COMPLETED'
+                trip.ride_end_time=timezone.localtime(timezone.now())
                 trip.save()
+                fcm_push_notification_trip_completed(trip.id, trip.customer.id, trip.driver.id)
                 notify_trip_completed.delay(trip.id, trip.customer.id, trip.driver.id)
                 # notify_trip_completed(trip.id, trip.customer.id, trip.driver.id)
                 return Response({"detail": "Trip completed successfully."}, status=status.HTTP_200_OK)
             else:
                 return Response({"detail": "Trip cannot be completed or you are not the assigned driver."}, status=status.HTTP_400_BAD_REQUEST)
         except Trip.DoesNotExist:
+            logger.error(f"Trip does not exist")
             return Response({"detail": "Trip does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
 
-class CompletedRidesListView(generics.ListAPIView):
-    serializer_class = TripSerializer
-    # pagination_class = CustomPagination
+class ArrivedAtPickupView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
+    def post(self, request, *args, **kwargs):
+        trip_id = request.data.get('trip_id')
+        user = request.user
+        try:
+            trip = Trip.objects.get(id=trip_id)
+            if trip.status == 'BOOKED' and trip.driver == user:
+                trip.driver_arrived_at_pickup_time=timezone.localtime(timezone.now())
+                trip.save()
+                fcm_push_notification_arrived_at_pickup(trip.id, trip.customer.id, trip.driver.id)
+                notify_arrived_at_pickup.delay(trip.id, trip.customer.id, trip.driver.id)
+                # notify_arrived_at_pickup(trip.id, trip.customer.id, trip.driver.id)
+                return Response({"detail": "Arrived at pickup successfully."}, status=status.HTTP_200_OK)
+            else:
+                return Response({"detail": "you are not the assigned driver."}, status=status.HTTP_400_BAD_REQUEST)
+        except Trip.DoesNotExist:
+            logger.error(f"Trip does not exist")
+            return Response({"detail": "Trip does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-    def get_queryset(self):
+
+
+
+
+class CompletedRidesListView(APIView):
+ 
+    permission_classes = (permissions.IsAuthenticated,)
+    def get(self, request):
         # Get the current authenticated user
         user = self.request.user
         total_distance = Trip.objects.filter(status='COMPLETED', driver=user, distance__isnull=False ).aggregate(Sum('distance'))['distance__sum'] or 0
         # If total_distance is None, default to 0
         total_distance = total_distance or 0
-        total_rent_price = Trip.objects.filter(status='COMPLETED', driver=user).aggregate(Sum('rent_price'))['rent_price__sum'] or 0
+        total_rent_price = Trip.objects.filter(status='COMPLETED', driver=user,payment_status="paid").aggregate(Sum('total_fare'))['total_fare__sum'] or 0
         # If total_rent_price is None, default to 0
         total_rent_price = total_rent_price or 0
         # Filter trips where the status is 'ON_TRIP' and the driver is the authenticated user
+        completed_trip=Trip.objects.filter(status='COMPLETED', driver=user).order_by('-created_at')
         response_data = {
             "total_trips":Trip.objects.filter(status='COMPLETED', driver=user).count(),
             "tatal_distance":total_distance,
             "total_earing":total_rent_price,
-            "ride_history":Trip.objects.filter(status='COMPLETED', driver=user)
-
+            "ride_history":TripSerializer(completed_trip, many=True).data
         }
-        return response_data
+        return Response(response_data, status=status.HTTP_200_OK)
 
-class ScheduledRideListView(generics.ListAPIView):
-    serializer_class = TripSerializer
-    # pagination_class = CustomPagination
+        # return response_data
+    
+
+class ScheduledRideListView(APIView):
+ 
     permission_classes = (permissions.IsAuthenticated,)
-
-    def get_queryset(self):
+    def get(self, request):
         # Get all trips where scheduled_datetime is in the future
         user = self.request.user
-        now = timezone.now()
+        # now = timezone.now()
+        now=timezone.localtime(timezone.now())
         total_distance = Trip.objects.filter(status='COMPLETED', driver=user, distance__isnull=False ).aggregate(Sum('distance'))['distance__sum'] or 0
         # If total_distance is None, default to 0
         total_distance = total_distance or 0
-        today = timezone.now().date()
+        # today = timezone.now().date()
+        today=timezone.localtime().date()
 
         # Filter trips by status, driver, and today's date
         today_total_rent_price = Trip.objects.filter(
@@ -226,26 +283,30 @@ class ScheduledRideListView(generics.ListAPIView):
             driver=user,
             created_at__date=today  # Assuming the `scheduled_datetime` is the date field to compare
         ).aggregate(Sum('rent_price'))['rent_price__sum'] or 0
+        schedule_trips=Trip.objects.filter(scheduled_datetime__isnull=False, scheduled_datetime__gt=now, driver=user, status="BOOKED").order_by('-created_at')
+        schedule_trips_serializer = TripSerializer(schedule_trips, many=True)
+        schedule_trips_data=schedule_trips_serializer.data
+        for trip in schedule_trips_data:
+            trip.pop('otp', None) 
         response_data={
             "total_schedule_trips":Trip.objects.filter(scheduled_datetime__isnull=False, scheduled_datetime__gt=now, driver=user).count(),
             "total_distance":total_distance,
             "today's_earging": today_total_rent_price,
-            "schedule_trips":Trip.objects.filter(scheduled_datetime__isnull=False, scheduled_datetime__gt=now, driver=user)
+            "schedule_trips":schedule_trips_data
         }
-        return response_data
+        return Response(response_data, status=status.HTTP_200_OK)
 
-class CurrentRidesListView(generics.ListAPIView):
-    serializer_class = TripSerializer
-    # pagination_class = CustomPagination
+class CurrentRidesListView(APIView):
+ 
     permission_classes = (permissions.IsAuthenticated,)
-
-    def get_queryset(self):
+    def get(self, request): 
         # Get the current authenticated user
         user = self.request.user
         total_distance = Trip.objects.filter(status='COMPLETED', driver=user, distance__isnull=False ).aggregate(Sum('distance'))['distance__sum'] or 0
         # If total_distance is None, default to 0
         total_distance = total_distance or 0
-        today = timezone.now().date()
+        # today = timezone.now().date()
+        today=timezone.localtime().date()
 
         # Filter trips by status, driver, and today's date
         today_total_rent_price = Trip.objects.filter(
@@ -255,39 +316,102 @@ class CurrentRidesListView(generics.ListAPIView):
         ).aggregate(Sum('rent_price'))['rent_price__sum'] or 0
         # Filter trips where the status is 'ON_TRIP' and the driver is the authenticated user
         current_trip_statuses = ['REQUESTED', 'ACCEPTED', 'BOOKED', 'ON_TRIP']
+        current_ride=Trip.objects.filter(status__in=current_trip_statuses,driver=user).order_by('-created_at')
+        current_ride_serializer = TripSerializer(current_ride, many=True)
         response_data = {
             "current_trips":Trip.objects.filter(status__in=current_trip_statuses,driver=user).count(),
             "tatal_distance":total_distance,
             "today's_earing":today_total_rent_price,
-            "current_ride":Trip.objects.filter(status__in=current_trip_statuses,driver=user)
+            "current_ride":current_ride_serializer.data
 
         }
-        return response_data
-# payment type = case, UPI, WALLET, QRcode
+        return Response(response_data, status=status.HTTP_200_OK)
+
 
 
 class PassengerTripListView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     def get(self, request):
-        
-
         # Filter trips based on status
-        
-        complete_ride=Trip.objects.filter(status='COMPLETED',customer=self.request.user)
+        complete_ride=Trip.objects.filter(status='COMPLETED',customer=self.request.user).order_by("-created_at")
         # Serialize the filtered trips
         complete_ride_serializer = TripSerializer(complete_ride, many=True)
-        schedule_ride=Trip.objects.filter(status='BOOKED',customer=self.request.user, scheduled_datetime__isnull=False)
+        # for com_ride in complete_ride_serializer.data:
+        complete_ride_data = complete_ride_serializer.data
+        for ride in complete_ride_data:
+            try:
+                driver_info = ride.get('driver')
+                # print(driver_info)
+                if driver_info:
+                    driver=Driver.objects.get(id=driver_info['id'])
+                    # Update the serialized data (this doesn't update the database directly)
+                    driver_info['rating'] = get_driver_rating(driver)
+                    driver_info['total_earing'] = Trip.objects.filter(status='COMPLETED', driver=driver,  payment_status="paid").aggregate(Sum('total_fare'))['total_fare__sum'] or 0
+                    driver_info['total_distance'] =Trip.objects.filter(status='COMPLETED', driver=driver, distance__isnull=False ).aggregate(Sum('distance'))['distance__sum'] or 0
+                    driver_info['total_complete_trip'] = Trip.objects.filter(status='COMPLETED', driver=driver).count()
+            except Exception as e:
+                logger.error(f"Error occurred: {e}")
+            
+
+        schedule_ride=Trip.objects.filter(status='BOOKED',customer=self.request.user, scheduled_datetime__isnull=False).order_by('-created_at')
         # Serialize the filtered trips
         schedule_ride_serializer = TripSerializer(schedule_ride, many=True)
-        active_ride=Trip.objects.filter(status='ON_TRIP',customer=self.request.user)
+        schedule_ride_data=schedule_ride_serializer.data
+        for ride in schedule_ride_data:
+            try:
+                driver_info = ride.get('driver')
+                # print(driver_info)
+                if driver_info:
+                    driver=Driver.objects.get(id=driver_info['id'])
+                    # Update the serialized data (this doesn't update the database directly)
+                    driver_info['rating'] = get_driver_rating(driver)
+                    driver_info['total_earing'] = Trip.objects.filter(status='COMPLETED', driver=driver,  payment_status="paid").aggregate(Sum('total_fare'))['total_fare__sum'] or 0
+                    driver_info['total_distance'] =Trip.objects.filter(status='COMPLETED', driver=driver, distance__isnull=False ).aggregate(Sum('distance'))['distance__sum'] or 0
+                    driver_info['total_complete_trip'] = Trip.objects.filter(status='COMPLETED', driver=driver).count()
+            except Exception as e:
+                logger.error(f"Error occurred: {e}")
+              
+        active_ride=Trip.objects.filter(status__in=['ON_TRIP','BOOKED'] ,customer=self.request.user).order_by('-created_at')
         active_ride_serializer = TripSerializer(active_ride, many=True)
-        cancelled_ride=Trip.objects.filter(status='CANCELLED',customer=self.request.user)
+        active_ride_data = active_ride_serializer.data
+        for ride in active_ride_data:
+            try:
+                driver_info = ride.get('driver')
+                # print(driver_info)
+                if driver_info:
+                    driver=Driver.objects.get(id=driver_info['id'])
+                    # Update the serialized data (this doesn't update the database directly)
+                    driver_info['rating'] = get_driver_rating(driver)
+                    driver_info['total_earing'] = Trip.objects.filter(status='COMPLETED', driver=driver,  payment_status="paid").aggregate(Sum('total_fare'))['total_fare__sum'] or 0
+                    driver_info['total_distance'] =Trip.objects.filter(status='COMPLETED', driver=driver, distance__isnull=False ).aggregate(Sum('distance'))['distance__sum'] or 0
+                    driver_info['total_complete_trip'] = Trip.objects.filter(status='COMPLETED', driver=driver).count()
+            except Exception as e:
+                logger.error(f"Error occurred: {e}")
+                print(e)
+        # cancelled_ride=Trip.objects.filter(status='CANCELLED',customer=self.request.user,driver__isnull=False)
+        cancelled_ride=Trip.objects.filter(status='CANCELLED',customer=self.request.user).order_by('-created_at')
         cancelled_ride_serializer = TripSerializer(cancelled_ride, many=True)
+        cancelled_ride_data=cancelled_ride_serializer.data
+        for ride in cancelled_ride_data:
+            try:
+                driver_info = ride.get('driver')
+                # print(driver_info)
+                if driver_info:
+                    driver=Driver.objects.get(id=driver_info['id'])
+                    # Update the serialized data (this doesn't update the database directly)
+                    driver_info['rating'] = get_driver_rating(driver)
+                    driver_info['total_earing'] = Trip.objects.filter(status='COMPLETED', driver=driver,  payment_status="paid").aggregate(Sum('total_fare'))['total_fare__sum'] or 0
+                    driver_info['total_distance'] =Trip.objects.filter(status='COMPLETED', driver=driver, distance__isnull=False ).aggregate(Sum('distance'))['distance__sum'] or 0
+                    driver_info['total_complete_trip'] = Trip.objects.filter(status='COMPLETED', driver=driver).count()
+            except Exception as e:
+                logger.error(f"Error occurred: {e}")
+        
+
         response_data={
-            "active_ride":active_ride_serializer.data,
-            "schedule_ride":schedule_ride_serializer.data,
-            "complete_rid":complete_ride_serializer.data,
-            "cancelled_ride":cancelled_ride_serializer.data,
+            "active_ride":active_ride_data,
+            "schedule_ride":schedule_ride_data,
+            "complete_ride":complete_ride_data,
+            "cancelled_ride":cancelled_ride_data,
         }
 
         # Return the serialized data

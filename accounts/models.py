@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from utility.model import BaseModel
@@ -99,6 +100,7 @@ class User(AbstractUser):
     type = models.CharField(max_length=11, choices=Types.choices,
                             default=Types.CUSTOMER)
     username = None
+    date_joined = models.DateTimeField(_("date joined"), default=timezone.localtime(timezone.now()))
     phone = models.CharField(max_length=21, unique=True)
     email = models.EmailField(max_length=254)
     
@@ -222,25 +224,25 @@ class FileUpload(BaseModel):
     phone = models.CharField(max_length=74)
 
 
-class CustomerReferral(BaseModel):
-    referrer = models.ForeignKey(Customer, on_delete=models.CASCADE,
-                                 related_name='referreds')
-    referred = models.OneToOneField(Customer, on_delete=models.CASCADE,
-                                    related_name='referrers')
+# class CustomerReferral(BaseModel):
+#     referrer = models.ForeignKey(Customer, on_delete=models.CASCADE,
+#                                  related_name='referreds')
+#     referred = models.OneToOneField(Customer, on_delete=models.CASCADE,
+#                                     related_name='referrers')
 
-    class Meta:
-        unique_together = (('referrer', 'referred'),)
+#     class Meta:
+#         unique_together = (('referrer', 'referred'),)
 
-    def __str__(self):
-        return f'{self.referrer} => {self.referred}'
+#     def __str__(self):
+#         return f'{self.referrer} => {self.referred}'
 
-    def clean(self, *args, **kwargs):
-        if self.referrer == self.referred:
-            raise ValidationError(_('The referrer and referred are same.'))
+#     def clean(self, *args, **kwargs):
+#         if self.referrer == self.referred:
+#             raise ValidationError(_('The referrer and referred are same.'))
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super(CustomerReferral, self).save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#         self.full_clean()
+#         return super(CustomerReferral, self).save(*args, **kwargs)
 
 
 class BankAccount(BaseModel):

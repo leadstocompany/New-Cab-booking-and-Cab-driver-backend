@@ -51,6 +51,8 @@ urlpatterns = [
     path('couponcode/', include('couponcode.urls')),
     path('subscriptions/', include('subscriptions.urls')),
     path('sos/', include('sos.urls')),
+    path('support/', include('support.urls')),
+    path('referrance/', include('referrance.urls')),
     # path('car-booking-api/', include('car_booking_api.urls')),
     path('admin-api/', include('admin_api.urls')),
     re_path(r'^', include(routing.websocket_urlpatterns)),

@@ -8,7 +8,10 @@ from rest_framework.response import Response
 from trips.models import Trip
 import math
 from django.db.models import Q
-from subscriptions.models import Subscription
+from subscriptions.models import Subscriptions
+from rest_framework.exceptions import NotFound
+import logging
+logger = logging.getLogger(__name__)
 # Create your views here.
 
 class CabTypeAPI(generics.ListAPIView):
@@ -27,12 +30,30 @@ class VehicleMakerAPI(generics.ListAPIView):
     serializer_class = VehicleMakerSerializer
     def get_queryset(self):
         return VehicleMaker.objects.filter(cab_type=self.kwargs.get("pk"), is_active=True)
+        # return VehicleMaker.objects.filter(is_active=True)
 
+# class VehicleModelAPI(generics.ListAPIView):
+#     permission_classes = (permissions.IsAuthenticated,)
+#     serializer_class = VehicleModelSerializer
+#     def get_queryset(self):
+#         return VehicleModel.objects.filter(maker_id=self.kwargs.get("pk"), is_active=True)
 class VehicleModelAPI(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = VehicleModelSerializer
+
     def get_queryset(self):
-        return VehicleModel.objects.filter(maker_id=self.kwargs.get("pk"), is_active=True)
+        # Retrieve URL parameters
+        cab_type_id = self.kwargs.get('cab_type_id')
+        cab_maker_id = self.kwargs.get('cab_maker_id')
+
+        # Filter VehicleModel based on cab_maker_id and is_active status
+        queryset = VehicleModel.objects.filter(maker_id=cab_maker_id, is_active=True)
+
+        # Optionally, filter by cab_type_id if needed
+        if cab_type_id:
+            queryset = queryset.filter(cabtype_id=cab_type_id)
+        
+        return queryset
 
 class VehicleLocationUpdateAPI(generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -106,7 +127,7 @@ class CabClassWithPriceList(APIView):
 
 class NearestDriversView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
-    def get(self, request,cab_class_id, latitude, longitude, max_distance=5, *args, **kwargs):
+    def get(self, request,cab_class_id, latitude, longitude, max_distance=15, *args, **kwargs):
         max_distance = float(max_distance)
         radius = 6371  # Earth's radius in kilometers
 
@@ -133,14 +154,27 @@ class NearestDriversView(APIView):
 
         for driver in drivers_without_active_trips:
             try:
-                subscription = Subscription.objects.filter(driver=driver, is_active=True).first()
-                if subscription and subscription.pending_rides > 0:
-                    location = driver.currentlocation
-                    distance = haversine(float(latitude), float(longitude), location.current_latitude, location.current_longitude)
-                    if distance <= max_distance:
-                        nearby_drivers.append(driver)
-            except CurrentLocation.DoesNotExist:
+                subscription = Subscriptions.objects.filter(driver=driver, is_active=True, payment_status="PAID").first()
+                # if subscription and subscription.pending_rides > 0:
+                if subscription:
+                    if not subscription.is_expired():
+                        
+                        location = driver.currentlocation
+                        distance = haversine(float(latitude), float(longitude), float(location.current_latitude), float(location.current_longitude))
+                        print("driver", driver.phone, "distance:", distance, " <=",  max_distance)
+                        if distance <= max_distance:
+                            print(1)
+                            nearby_drivers.append(driver)
+                # else:
+                #     raise NotFound(detail="Subscription not found, Please Subscribe fast")
+                    
+            except CurrentLocation.DoesNotExist as e:
+                logger.error(f"Error occurred: {e}")
                 continue
+            except Subscriptions.DoesNotExist as e:
+                logger.error(f"Error occurred: {e}")
+                raise NotFound(detail="Subscription not found, Please Subscribe fast")
+                    
 
         serializer = NearestDriverSerializer(nearby_drivers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

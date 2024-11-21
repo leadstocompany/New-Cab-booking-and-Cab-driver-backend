@@ -17,7 +17,7 @@ class UserAdmin(BaseUserAdmin):
         (_('Personal info'), {'fields': ('birth_day', 'gender', 'email', 'full_address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'house_or_building', 'road_or_area', 'alternate_number', 'photo_upload', 'user_doc')}),
         (_('Permissions'), {'fields': ('type', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
-        (_('Profile Status'), {'fields': ('profile_status', 'rejection_reason')}),
+        (_('Profile Status'), {'fields': ('profile_status', 'rejection_reason', 'fcm_token')}),
     )
 
     # Fields to be used in forms for adding or changing users
@@ -51,15 +51,21 @@ class BankAccountAdmin(admin.ModelAdmin):
     search_fields = ('name', 'account_number', 'swift_code', 'bank_name')
     list_filter = ('bank_name',)
 
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ('phone', 'email', 'code', 'birth_day')
+    search_fields = ('phone', 'email')
+    ordering = ('phone',)
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Driver, DriverAdmin)
+admin.site.register(Customer, CustomerAdmin)
 admin.site.register(CurrentLocation, CurrentLocationAdmin)
 
 
 # admin.site.register(User)
 # admin.site.register(Driver)
 admin.site.register(Admin)
-admin.site.register(Customer)
+# admin.site.register(Customer)
 admin.site.register(DriverPhoneVerify)
 admin.site.register(CustomerPhoneVerify)
 

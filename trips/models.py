@@ -25,9 +25,17 @@ class Trip(BaseModel):
         Vehicle, on_delete=models.PROTECT, null=True, blank=True, related_name='trips')
     status = models.CharField(
         choices=TRIP_STATUS, max_length=74, null=True, blank=True)
-    source = models.CharField(max_length=74, null=True, blank=True)
-    destination = models.CharField(max_length=74, null=True, blank=True)
-    distance = models.CharField(max_length=11, null=True, blank=True)
+    source = models.CharField(max_length=5000, null=True, blank=True)
+    destination = models.CharField(max_length=5000, null=True, blank=True)
+    pickup_latitude=models.CharField(max_length=50, null=True, blank=True)
+    pickup_longitude=models.CharField(max_length=50, null=True, blank=True)
+    dropup_latitude=models.CharField(max_length=50, null=True, blank=True)
+    dropup_longitude=models.CharField(max_length=50, null=True, blank=True)
+    # distance = models.CharField(max_length=11, null=True, blank=True)
+    distance = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
     time = models.CharField(max_length=74, null=True, blank=True)
     ride_type = models.ForeignKey(CabClass, on_delete=models.CASCADE)
     otp_count = models.PositiveIntegerField(default=1)
@@ -44,6 +52,11 @@ class Trip(BaseModel):
     waiting_charge= models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))],default=0, null=True, blank=True)
     total_fare= models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))],default=0, null=True, blank=True)
     payment_status=models.CharField(max_length=255, null=True, blank=True)
+    driver_arrived_at_pickup_time=models.DateTimeField(null=True, blank=True)
+    ride_start_time=models.DateTimeField(null=True, blank=True)
+    ride_end_time=models.DateTimeField(null=True, blank=True)
+    
+      
     def __str__(self):
         return self.source
 
@@ -57,34 +70,7 @@ class TripRating(BaseModel):
     feedback = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return self.trip
-# class Payment(BaseModel):
-#     trip=models.ForeignKey(Trip,  on_delete=models.PROTECT)
-#     amount=models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))])
-#     currency = models.CharField(max_length=10, default='usd')
-#     payment_type=models.CharField(max_length=255, null=True, blank=True)
-#     payment_id=models.CharField(max_length=255, null=True, blank=True)
-#     status_choices = (
-#         ('PAID', 'Paid'),
-#         ('PENDING', 'Pending'),
-#         ('FAILED', 'Failed'),
-#         ('REFUNDED', 'Refunded'),
-#     )
-#     payment_status = models.CharField(max_length=15, choices=status_choices)
-#     def __str__(self):
-#         return self.trip 
-# class DriverPricingRatio(BaseModel):
-#     ratio = models.FloatField("Ratio")
+        return self.trip.source
 
-#     def __str__(self):
-#         return self.ratio
-
-# @receiver(post_save, sender=Trip)
-# def schedule_trip_notification(sender, instance, created, **kwargs):
-#     if created and instance.scheduled_time:
-#         send_trip_notification.apply_async(
-#             (instance.id,),
-#             eta=instance.scheduled_time - timedelta(hours=1)
-#         )
 # Register signals
-import trips.signals  # Ensure this import is at the bottom
+# import trips.signals  # Ensure this import is at the bottom

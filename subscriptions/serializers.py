@@ -37,7 +37,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscriptions
-        fields = ['driver', 'plan',  'pay_amount', 'payment_status', 'number_of_time_subscribe', 'payment_id','created_at', 'updated_at', 'is_active', 'subcribe_date', 'expire_date']
+        fields = ['driver', 'plan',  'pay_amount', 'payment_status', 'number_of_time_subscribe', 'payment_id','created_at', 'is_active', 'subcribe_date', 'expire_date']
         
     def to_representation(self, instance):
         self.fields['driver'] =  DriverProfileSerializer(read_only=True)
@@ -49,7 +49,7 @@ class SubscriptionsLogsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription_Logs
         
-        fields = ['driver', 'plan', 'pay_amount', 'payment_status', 'payment_id', 'created_at', 'updated_at', 'is_active', 'subcribe_date', 'expire_date']
+        fields = ['driver', 'plan', 'pay_amount', 'payment_status', 'payment_id', 'created_at', 'is_active', 'subcribe_date', 'expire_date']
     def to_representation(self, instance):
         self.fields['driver'] =  DriverProfileSerializer(read_only=True)
         self.fields['plan'] =  SubscriptionPlanSerializer(read_only=True)

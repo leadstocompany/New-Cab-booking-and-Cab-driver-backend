@@ -8,12 +8,12 @@ from .serializers import SOSHelpRequestSerializer
 def send_sos_notification(sos_request_id):
     sos_request = SOSHelpRequest.objects.get(id=sos_request_id)
     channel_layer = get_channel_layer()
-    messae = SOSHelpRequestSerializer(sos_request).data
+    message = SOSHelpRequestSerializer(sos_request).data
 
     async_to_sync(channel_layer.group_send)(
         "admins",
         {
             "type": "send_sos",
-            "message": essage,
+            "message": message,
         }
     )

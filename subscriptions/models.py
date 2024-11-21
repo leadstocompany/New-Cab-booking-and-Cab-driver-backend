@@ -5,6 +5,7 @@ from django.utils import timezone
 from cabs.models import CabClass
 from datetime import datetime
 from django.utils.timezone import now
+from django.utils import timezone
 # Create your models here.
 
 
@@ -17,8 +18,7 @@ class SubscriptionPlan(models.Model):
     discount = models.PositiveIntegerField(default=0)
     original_price = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.localtime(timezone.now()))
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -48,12 +48,12 @@ class Subscriptions(models.Model):
     payment_status = models.CharField(max_length=15, choices=status_choices)
     number_of_time_subscribe=models.IntegerField(default=0)
     payment_id = models.CharField(max_length= 55 , default=" ", null=True, blank=True)
-    created_at=models.DateTimeField(auto_now_add=True)
-    updated_at=models.DateTimeField(auto_now_add=True)
+    created_at=models.DateTimeField(default=timezone.localtime(timezone.now()))
+    # updated_at=models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     objects = models.Manager()
     def __str__(self):
-        return f"{self.driver.username} - {self.plan.plan_name}"
+        return f"{self.driver.phone} - {self.plan.plan_name}"
     class Meta:
         db_table = 'subscriptions'
     def is_expired(self):
@@ -77,13 +77,13 @@ class Subscription_Logs(models.Model):
     )
     payment_status = models.CharField(max_length=15, choices=status_choices)
     payment_id = models.CharField(max_length= 55, default=None, null=True, blank=True)
-    created_at=models.DateTimeField(auto_now_add=True)
-    updated_at=models.DateTimeField(auto_now_add=True)
+    created_at=models.DateTimeField(default=timezone.localtime(timezone.now()))
+    # updated_at=models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     objects = models.Manager()
 
     def __str__(self):
-        return f"{self.driver.username} - {self.plan}"
+        return f"{self.driver.phone} - {self.plan}"
     class Meta:
         db_table = 'subscription_logs'
 

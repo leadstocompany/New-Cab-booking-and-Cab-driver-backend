@@ -1,8 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
-# views.py
-
 import stripe
 from JLP_MyRide import settings
 from accounts.models import User
@@ -12,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Wallet, Transaction
-from .serializers import WalletSerializer, TransactionSerializer
+from .serializers import WalletSerializer, TransactionSerializer, IncomeTransactionSerializer, ExpenseTransactionSerializer
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import datetime, time
@@ -20,7 +15,9 @@ from utility.permissions import IsAdminOrSuperuser
 from accounts.models import BankAccount
 from django.utils.dateparse import parse_date
 from django.shortcuts import get_object_or_404
-
+from decimal import Decimal
+import logging
+logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -48,36 +45,57 @@ class GetWalletView(APIView):
             now = timezone.now()
             wallet_serializer=WalletSerializer(wallet)
             # Define the start and end of today
-            start_of_today = timezone.make_aware(datetime.combine(now.date(), time.min))
-            end_of_today = timezone.make_aware(datetime.combine(now.date(), time.max))
-        except Wallet.DoesNotExist:
+            # start_of_today = timezone.make_aware(datetime.combine(now.date(), time.min))
+            # end_of_today = timezone.make_aware(datetime.combine(now.date(), time.max))
+            # Start of today (00:00:00 in local time)
+            start_of_today = timezone.localtime(timezone.now()).replace(hour=0, minute=0, second=0, microsecond=0)
+            # End of today (23:59:59 in local time)
+            end_of_today = timezone.localtime(timezone.now()).replace(hour=23, minute=59, second=59, microsecond=999999)
+        except Wallet.DoesNotExist as e:
+            logger.error(f"Error occurred: {e}")
             return Response({'error': 'Wallet does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        except User.DoesNotExist:
+        except User.DoesNotExist as e:
+            logger.error(f"Error occurred: {e}")
             return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
         
         if user_type == 'CUSTOMER':
             # Calculate total expenses for customers
             total_expenses = self.calculate_total_withdrawn(user)
-            transection=Transaction.objects.filter(user=user,date__range=(start_of_today, end_of_today))
-            transection_serializer=TransactionSerializer(transection, many=True)
+            today_expenses=Transaction.objects.filter(user=user,transaction_type__in=['EXPENSE', 'WITHDRAW'], date__range=(start_of_today, end_of_today)).aggregate(total_amount=Sum('amount'))['total_amount'] or 0.00
+            total_expend_from_wallet=Transaction.objects.filter(user=user,transaction_type__in=['EXPENSE', 'WITHDRAW'], transaction_mode="WALLETS").aggregate(total_amount=Sum('amount'))['total_amount'] or 0.00 
+            # transection=Transaction.objects.filter(user=user,date__range=(start_of_today, end_of_today)).order_by("-date")
+            # transection_serializer=TransactionSerializer(transection, many=True)
+
+            deposit = Transaction.objects.filter(user=user,transaction_type="DEPOSIT", date__range=(start_of_today, end_of_today)).order_by('-date')
+            deposit_serializer=TransactionSerializer(deposit, many=True)
+            expense= Transaction.objects.filter(user=user,transaction_type__in=["WITHDRAW", "EXPENSE"], date__range=(start_of_today, end_of_today)).order_by('-date')
+            expense_serializer=ExpenseTransactionSerializer(expense, many=True)
             data = {
                 "wallet": wallet_serializer.data,
                 'total_expenses': total_expenses,
-                "transection":transection_serializer.data,
+                'total_expend_from_wallet':total_expend_from_wallet,
+                'today_expenses':today_expenses,
+                "today_deposite":deposit_serializer.data,
+                "today_expense":expense_serializer.data
             }
         else:
             # Filter transactions that are of type "DEPOSIT" and created today
-            today_payments = Transaction.objects.filter( user=user,
-                transaction_type="DEPOSIT",
-                date__range=(start_of_today, end_of_today)
-            )
-            today_payments_serializer=TransactionSerializer(today_payments, many=True)
-            today_total_payment_amount = Transaction.objects.filter(user=user,transaction_type="DEPOSIT", date__range=(start_of_today, end_of_today)).aggregate(total_amount=Sum('amount'))['total_amount'] or 0.00
-
+            # transection = Transaction.objects.filter(user=user,
+            #     date__range=(start_of_today, end_of_today)
+            # ).order_by('-date')
+            # transection_serializer=TransactionSerializer(transection, many=True)
+            income = Transaction.objects.filter(user=user,transaction_type="INCOME",date__range=(start_of_today, end_of_today)).order_by('-date')
+            income_serializer=IncomeTransactionSerializer(income, many=True)
+            withdraw = Transaction.objects.filter(user=user,transaction_type="WITHDRAW",date__range=(start_of_today, end_of_today)).order_by('-date')
+            withdraw_serializer=TransactionSerializer(withdraw, many=True)
+            today_earning = Transaction.objects.filter(user=user,transaction_type="DEPOSIT", date__range=(start_of_today, end_of_today)).aggregate(total_amount=Sum('amount'))['total_amount'] or 0.00
+            total_earning =Transaction.objects.filter(user=user,transaction_type="DEPOSIT").aggregate(total_amount=Sum('amount'))['total_amount'] or 0.00
             data = {
                 "wallet": wallet_serializer.data,
-                "today_payments":today_payments_serializer.data,
-                "today_total_payment_amount":today_total_payment_amount
+                "today_income":income_serializer.data,
+                "today_withdraw":withdraw_serializer.data,
+                "total_earning":total_earning,
+                "today_earning":today_earning
             }
         
         return Response(data, status=status.HTTP_200_OK)
@@ -91,42 +109,6 @@ class GetWalletView(APIView):
         return total_withdrawn
 
 
-
-
-# class DepositView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, *args, **kwargs):
-#         amount = request.data.get('amount')
-#         token = request.data.get('token')
-
-#         if not amount or not token:
-#             return Response({'error': 'Amount and token are required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-#         try:
-#             charge = stripe.Charge.create(
-#                 amount=int(float(amount) * 100),  # Amount in cents
-#                 currency='usd',
-#                 description='Wallet Deposit',
-#                 source=token
-#             )
-#             if Wallet.objects.filter(user=request.user).exists():
-#                 wallet=Wallet.objects.filter(user=request.user).first()
-#             else:
-#                 wallet, created = Wallet.objects.get_or_create(user=request.user)
-#             wallet.balance += float(amount)
-#             wallet.save()
-
-#             Transaction.objects.create(
-#                 user=request.user,
-#                 amount=amount,
-#                 transaction_type='DEPOSIT',
-#                 remake='Stripe deposit'
-#             )
-
-#             return Response({'success': 'Deposit successful'}, status=status.HTTP_200_OK)
-#         except stripe.error.StripeError as e:
-#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateWalletDepositView(APIView):
@@ -158,8 +140,10 @@ class CreateWalletDepositView(APIView):
             }, status=status.HTTP_200_OK)
 
         except stripe.error.StripeError as e:
+            logger.error(f"Error occurred: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response({'error': 'An error occurred while creating the payment'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SuccessWalletDepositView(APIView):
@@ -182,7 +166,8 @@ class SuccessWalletDepositView(APIView):
                 wallet = Wallet.objects.filter(user=request.user).first()
 
                 # Update the wallet balance
-                wallet.balance += float(amount)
+                wallet.balance += Decimal(str(amount))
+            
                 wallet.save()
 
                 # Log the deposit transaction
@@ -190,16 +175,19 @@ class SuccessWalletDepositView(APIView):
                     user=request.user,
                     amount=amount,
                     transaction_type='DEPOSIT',
+                    transaction_mode='WALLETS',
                     remark=f'Stripe payment intent ID: {payment_intent.id}'
                 )
 
-                return Response({'success': 'Deposit successful', 'wallet_balance': wallet.balance}, status=status.HTTP_200_OK)
+                return Response({'success': 'Deposit successful', 'wallet_balance': wallet.balance,}, status=status.HTTP_200_OK)
             else:
                 return Response({'error': f'Payment not completed. Current status: {payment_intent.status}'}, status=status.HTTP_400_BAD_REQUEST)
 
         except stripe.error.StripeError as e:
+            logger.error(f"Error occurred: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response({'error': 'An error occurred while processing the payment'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class WithdrawView(APIView):
@@ -241,6 +229,7 @@ class WithdrawView(APIView):
                     user=request.user,
                     amount=amount,
                     transaction_type='WITHDRAW',
+                    transaction_mode='WALLETS',
                     remark=f'Stripe transfer ID: {transfer.id}'  # Save the transfer ID for reference
                 )
 
@@ -249,6 +238,7 @@ class WithdrawView(APIView):
                 return Response({'error': 'Transfer failed', 'status': transfer.status}, status=status.HTTP_400_BAD_REQUEST)
 
         except stripe.error.StripeError as e:
+            logger.error(f"Error occurred: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -259,27 +249,29 @@ class GetTransactionView(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         try:
-            profile = User.objects.get(user=user)
-            user_type = profile.user_type
+            profile = User.objects.get(id=user.id)
+            user_type = profile.type
+            print(user_type)
                    
-        except User.DoesNotExist:
+        except User.DoesNotExist as e:
+            logger.error(f"Error occurred: {e}")
             return Response({'error': 'User profile does not exist'}, status=status.HTTP_404_NOT_FOUND)
         
-        if user_type == 'customer':
+        if user_type == 'CUSTOMER':
             # Calculate total expenses for customers   
-            deposit = Transaction.objects.filter(user=user,transaction_type="DEPOSIT")
+            deposit = Transaction.objects.filter(user=user,transaction_type="DEPOSIT").order_by('-date')
             deposit_serializer=TransactionSerializer(deposit, many=True)
-            expense= Transaction.objects.filter(user=user,transaction_type="WITHDRAW")
-            expense_serializer=TransactionSerializer(expense, many=True)
+            expense= Transaction.objects.filter(user=user,transaction_type__in=["WITHDRAW", "EXPENSE"]).order_by('-date')
+            expense_serializer=ExpenseTransactionSerializer(expense, many=True)
             data = {
                 'expenses': expense_serializer.data,
                 "deposit":deposit_serializer.data,
             }
         else:
             # Filter transactions that are of type "DEPOSIT" and created today
-            payments = Transaction.objects.filter(user=user,transaction_type="DEPOSIT")
-            payments_serializer=TransactionSerializer(payments, many=True)
-            withdraw = Transaction.objects.filter(user=user,transaction_type="WITHDRAW")
+            payments = Transaction.objects.filter(user=user,transaction_type="INCOME").order_by('-date')
+            payments_serializer=IncomeTransactionSerializer(payments, many=True)
+            withdraw = Transaction.objects.filter(user=user,transaction_type="WITHDRAW").order_by('-date')
             withdraw_serializer=TransactionSerializer(withdraw, many=True)
 
             data = {
@@ -291,11 +283,27 @@ class GetTransactionView(APIView):
 
 
 
-class WalletListView(generics.ListAPIView):
+# class WalletListView(generics.ListAPIView):
+#     permission_classes = [IsAdminOrSuperuser]
+#     queryset = Wallet.objects.all()
+#     serializer_class = WalletSerializer
+
+class DriverWalletListView(generics.ListAPIView):
     permission_classes = [IsAdminOrSuperuser]
-    queryset = Wallet.objects.all()
     serializer_class = WalletSerializer
 
+    def get_queryset(self):
+        # Filtering users by type "DRIVER" from your custom User model
+        return Wallet.objects.filter(user__type=User.Types.DRIVER)
+
+
+class CustomerWalletListView(generics.ListAPIView):
+    permission_classes = [IsAdminOrSuperuser]
+    serializer_class = WalletSerializer
+
+    def get_queryset(self):
+        # Filtering users by type "DRIVER" from your custom User model
+        return Wallet.objects.filter(user__type=User.Types.CUSTOMER)
 
 
 class UserTransactionListView(generics.ListAPIView):
@@ -329,13 +337,56 @@ class UserTransactionListView(generics.ListAPIView):
             withdraw = withdraw.filter(date__date__range=[start_date, end_date])
         deposite_serializer = self.get_serializer(deposite, many=True)
         withdraw_serializer = self.get_serializer(withdraw, many=True)
+        # Fetch wallet details for the user
+        user_id = self.kwargs['user_id']
+        user = get_object_or_404(User, id=user_id)
+        wallet = Wallet.objects.filter(user=user).first()  # Assuming there's a Wallet model
+
+        # Create wallet details dictionary
+        wallet_details = {
+            "name":wallet.user.first_name + " " + wallet.user.last_name,
+            "profile_pic":wallet.user.photo_upload,
+            "balance": wallet.balance if wallet else 0,
+            "currency":"USD",  # Example fields
+        }
+
         return Response({
+            "wallet":wallet_details,
             "deposite": deposite_serializer.data,
             "withdraw": withdraw_serializer.data
         }, status=status.HTTP_200_OK)
 
 
 
+
+class WalletDetailView(generics.RetrieveAPIView):
+    serializer_class = WalletSerializer
+    permission_classes = [IsAdminOrSuperuser]# Ensure that only authenticated users can access this
+
+    def get_object(self):
+        # Get the user id from the URL or request
+        user_id = self.kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+
+        # Fetch the wallet associated with the user
+        wallet = Wallet.objects.filter(user=user).first()
+        return wallet
+
+    def retrieve(self, request, *args, **kwargs):
+        wallet = self.get_object()
+        wallet_details = {
+            
+            "user_id":wallet.user.id,
+            "user_name":wallet.user.first_name + " " + wallet.user.last_name,
+            "profile_pic":wallet.user.photo_upload,
+            "phone":wallet.user.phone,
+            "type":wallet.user.type,
+            "wallet_id":wallet.id,
+            "balance": wallet.balance if wallet else 0,
+            "currency":"USD",  # Example fields
+        }
+       
+        return Response(wallet_details, status=status.HTTP_200_OK)
 
 
 
@@ -387,29 +438,3 @@ class UserTransactionListView(generics.ListAPIView):
 #             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 #         except Exception as e:
 #             return Response({'error': 'An error occurred during transfer'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
-# class WalletListView(generics.ListAPIView):
-#     permission_classes = [IsAdminOrSuperuser]
-#     queryset = Wallet.objects.all()
-#     serializer_class = WalletSerializer
-
-class DriverWalletListView(generics.ListAPIView):
-    permission_classes = [IsAdminOrSuperuser]
-    serializer_class = WalletSerializer
-
-    def get_queryset(self):
-        # Filtering users by type "DRIVER" from your custom User model
-        return Wallet.objects.filter(user__type=User.Types.DRIVER)
-
-
-class CustomerWalletListView(generics.ListAPIView):
-    permission_classes = [IsAdminOrSuperuser]
-    serializer_class = WalletSerializer
-
-    def get_queryset(self):
-        # Filtering users by type "DRIVER" from your custom User model
-        return Wallet.objects.filter(user__type=User.Types.CUSTOMER)
-

@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import environ
 import os
+import firebase_admin
+from firebase_admin import credentials
 
 env = environ.Env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,7 +31,7 @@ SECRET_KEY = 'django-insecure-fgz#mao$)(n#(8+iy2^ljm8^zc^q77w#o#cfnvqa*l)8(v-ozc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-# ALLOWED_HOSTS = ['3.109.183.75', '127.0.0.1', 'localhost', '*']
+
 ALLOWED_HOSTS = ['https://jomlahapp.com','localhost', '*']
 
 
@@ -58,9 +60,9 @@ INSTALLED_APPS = [
     'couponcode',
     'subscriptions',
     'sos',
+    'support',
+    'referrance',
     'admin_api',
-  
-
 ]
 
 MIDDLEWARE = [
@@ -72,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'JLP_MyRide.middleware.CustomAuthMiddleware',
     
 ]
 
@@ -136,14 +139,25 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
+# LANGUAGE_CODE = 'en-us'
+
+# TIME_ZONE = 'Asia/Kuala_Lumpur'
+
+# # TIME_ZONE = 'UTC'
+
+# USE_I18N = True
+
+# USE_TZ = True
+
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kuala_Lumpur'  # Set to Malaysia's time zone (UTC+8)
 
-USE_I18N = True
+USE_I18N = True  # Enables translation and localization support
 
-USE_TZ = True
+USE_L10N = True  # Enables localization of formats (like dates, numbers)
 
+USE_TZ = True  # Enables timezone-aware datetime objects
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -180,51 +194,11 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [("localhost", 6379)],
-#         },
-#     },
-# }
+
 
 
 SERVER_URL = env('SERVER_URL')
 
-# USE_S3 = int(os.getenv('USE_S3', 0))
-# if USE_S3:
-#     print("user s3 bucket")
-#     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-#     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-#     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-#     AWS_DEFAULT_ACL = None
-#     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-#     AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
-
-#     PUBLIC_MEDIA_LOCATION = 'media'
-#     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
-#     DEFAULT_FILE_STORAGE = 'JLP_MyRide.storage_backends.PublicMediaStorage'
-
-# else:
-#     print("static file")
-#     STATIC_URL = 'static/'
-#     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-#     MEDIA_URL = 'media/'
-#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
-# Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-
-# Celery configuration options
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60
 
 
 # Channels Configuration
@@ -233,10 +207,36 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
+            # 'hosts': [('127.0.0.1', 6379)],
+            "hosts": [('localhost', 6379)],
         },
     },
 }
+
+
+
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# Explicitly set broker connection retry settings
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# Celery configuration options
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TIMEZONE = 'UTC'
+# CELERY_TASK_TRACK_STARTED = True
+# CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Kuala_Lumpur'  # Set Malaysia time zone
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes task time limit
+CELERY_ENABLE_UTC = True  # Use this if you want Celery to handle conversions from UTC
 
 CORS_ALLOWED_ORIGINS = [
     # env('CORS_ORIGINS_ONE'),
@@ -256,3 +256,67 @@ TWILIO_PHONE_NUMBER=env("TWILIO_PHONE_NUMBER")
 
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY')
+STRIPE_WEBHOOK_SECRET_FOR_SUBSCRIPTIONS=env('STRIPE_WEBHOOK_SECRET_FOR_SUBSCRIPTIONS')
+STRIPE_WEBHOOK_SECRET_FOR_RIDE_PAYMENT=env('STRIPE_WEBHOOK_SECRET_FOR_RIDE_PAYMENT')
+
+# Path to your Firebase service account credentials
+
+# BASE_DIR is typically defined in Django settings.py
+BASE_DIR1 =  os.path.dirname(os.path.realpath(__file__))
+
+# Dynamically construct the path to the Firebase credentials file
+firebase_credentials_path = os.path.join(BASE_DIR1, 'jomlah-cab-app-firebase-adminsdk.json')
+print(firebase_credentials_path)
+# Initialize Firebase with the dynamically constructed path
+cred = credentials.Certificate(firebase_credentials_path)
+firebase_admin.initialize_app(cred)
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'api_logs.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'JLP_MyRide': {  # Replace 'myapp' with the name of your app
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
+
+

@@ -16,6 +16,8 @@ from rest_framework import viewsets
 from accounts.serializers import *
 from rest_framework.views import APIView
 from JLP_MyRide import settings
+import logging
+logger = logging.getLogger(__name__)
 import stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 # Create your views here.
@@ -57,6 +59,7 @@ class DriverRegisterAPI(views.APIView):
             send_otp(hotp.at(driver.driverphoneverify.count), driver.phone)
             return Response(data={"status": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response(data={"status": False, 'data': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class DriverLoginAPI(views.APIView):
@@ -81,6 +84,7 @@ class DriverLoginAPI(views.APIView):
                 send_otp(hotp.at(driver.driverphoneverify.count), driver.phone)
                 return Response(data={"status": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response(data={"status": False, 'data': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class DriverOTPVerifyLoginAPI(views.APIView):
@@ -111,6 +115,7 @@ class DriverOTPVerifyLoginAPI(views.APIView):
             send_otp(hotp.at(driver.driverphoneverify.count), driver.phone)
             return Response(data={"status": True, }, status=status.HTTP_201_CREATED)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response(data={"status": False, 'data': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -141,6 +146,7 @@ class CustomerRegisterAPI(views.APIView):
             send_otp(hotp.at(customer.customerphoneverify.count), customer.phone)
             return Response(data={"status": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response(data={"status": False, 'data': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginCustomerwithPhoneNumberApi(views.APIView):
@@ -168,6 +174,7 @@ class LoginCustomerwithPhoneNumberApi(views.APIView):
             else:
                 return Response(data={"status": False, 'data': "Login Failed"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response(data={"status": False, 'data': str(e)}, status=status.HTTP_400_BAD_REQUEST) 
 class CustomerOtpVerifyLoginAPI(views.APIView):
     permission_classes = [permissions.AllowAny]
@@ -195,6 +202,7 @@ class CustomerOtpVerifyLoginAPI(views.APIView):
             send_otp(hotp.at(customer.customerphoneverify.count), customer.phone)
             return Response(data={"status": True, }, status=status.HTTP_201_CREATED)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response(data={"status": False, 'data': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -291,6 +299,7 @@ class BankAccountCreateAPIView(generics.CreateAPIView):
                 )
             data['account_id'] = external_account.id
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             pass
 
         # Validate and save the object using the serializer
@@ -308,7 +317,8 @@ class DriverBankAccountAPIView(APIView):
             bank_account = BankAccount.objects.get(driver__id=driver_id)
             serializer = BankAccountSerializer(bank_account)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except BankAccount.DoesNotExist:
+        except BankAccount.DoesNotExist as e:
+            logger.error(f"Error occurred: {e}")
             return Response({"error": "Bank account not found for this driver."}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -348,6 +358,7 @@ class UpdateDriverBankAccountAPIView(APIView):
             request.data['account_id'] = external_account.id
 
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             pass
 
         serializer = BankAccountSerializer(bank_account_detail, data=request.data, partial=True)
@@ -418,7 +429,7 @@ class CurrentLocationAPIView(APIView):
             location = CurrentLocation.objects.get(user=user)
             location.current_latitude = latitude
             location.current_longitude = longitude
-            location.timestamp=timezone.now()
+            location.timestamp=timezone.localtime(timezone.now())
             location.save()
             serializer = CurrentLocationSerializer(location)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -449,6 +460,7 @@ class SaveFCMTokenView(APIView):
             else:
                 return Response({"error":"fcm_token field required"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response({"error":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
 
 class DriverDutyOnOffView(APIView):
@@ -464,5 +476,6 @@ class DriverDutyOnOffView(APIView):
             else:
                 return Response({"error":"driver_duty field required"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Error occurred: {e}")
             return Response({"error":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
 

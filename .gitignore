@@ -6,3 +6,4 @@ media
 static
 .sqlite3
 venv
+api_logs.log

@@ -14,6 +14,7 @@ urlpatterns = [
     path('cancel-trip/', views.CancelTripView.as_view(), name='cancel_trip'),
     path('verify-otp-and-start-trip/', views.VerifyOTPAndStartTripView.as_view(), name='verify_otp_and_start_trip'),
     path('complete-trip/', views.CompleteTripView.as_view(), name='complete_trip'),
+    path('arrived-at-pickup/', views.ArrivedAtPickupView.as_view(), name='arrived_at_pickup'),
     path('driver-complated-ride', views.CompletedRidesListView.as_view(), name='driver-completed-rides-list'),
     path('driver-scheduled-ride', views.ScheduledRideListView.as_view(), name='scheduled-trips-list'),
     path('driver-current-ride/', views.CurrentRidesListView.as_view(), name='current-trips-list'),

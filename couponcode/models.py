@@ -9,7 +9,7 @@ class Coupon(models.Model):
     terms_conditions=models.TextField(null=True, blank=True)
     code = models.CharField(max_length=10, unique=True, editable=False)
     discount = models.DecimalField(max_digits=5, decimal_places=2)
-    valid_from = modls.DateTimeField()
+    valid_from = models.DateTimeField()
     valid_to = models.DateTimeField()
     active = models.BooleanField(default=True)
 
@@ -21,11 +21,11 @@ class Coupon(models.Model):
             self.code = self._generate_unique_code()
         super().save(*args, **kwargs)
 
-    def _generate_=unique_code(self):
+    def _generate_unique_code(self):
         length = 10
         characters = string.ascii_uppercase + string.digits
         while True:
-            code = ''.join(random.choice(chaoracters) for _ in range(length))
+            code = ''.join(random.choice(characters) for _ in range(length))
             if not Coupon.objects.filter(code=code).exists():
                 return code
 

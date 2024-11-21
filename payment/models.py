@@ -6,7 +6,7 @@ from django.core.validators import MinValueValidator
 from decimal import Decimal
 from accounts.models import Driver, Customer
 # Create your models here.
-class Payment(BaseModel):
+class Bill_Payment(BaseModel):
     trip=models.ForeignKey(Trip,  on_delete=models.PROTECT)
     driver=models.ForeignKey(Driver, on_delete=models.CASCADE, related_name="driver_receive_payment", null=True, blank=True)
     passenger=models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="passenger_pay_ride_charge", null=True, blank=True)
@@ -22,4 +22,7 @@ class Payment(BaseModel):
     )
     payment_status = models.CharField(max_length=15, choices=status_choices)
     def __str__(self):
-        return self.trip 
+        return f"Payment for {self.trip} - {self.payment_status}"
+
+    class Meta:
+        db_table = 'bill_payment'  # Define the table name here

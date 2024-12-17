@@ -78,7 +78,7 @@ class TripBilleGeneratedAPIView(APIView):
                 "customer_name":trip.customer.first_name + " " + trip.customer.last_name,
                 "customer_phone":trip.customer.phone,
                 "customer_photo":trip.customer.photo_upload,
-                "driver_rating":get_driver_rating(trip.driver),
+                "driver_rating": trip.driver.get_driver_rating(),
             }
             return Response({"detail": "Bill generate successfully.", "trip_bill":response_data},  status=status.HTTP_200_OK)
         except Trip.DoesNotExist as e:

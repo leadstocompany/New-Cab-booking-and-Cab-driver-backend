@@ -1,5 +1,6 @@
 # Create your models here.
 from base64 import b32encode
+from importlib import import_module
 
 # from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser, UserManager
@@ -145,6 +146,10 @@ class User(AbstractUser):
 
     def hash(self):
         return b32encode(("74-%s-base32secret" % self.phone).encode('utf-8'))
+    
+    def get_driver_rating(self):
+        TripRating = import_module("trips.models").TripRating
+        return TripRating.objects.filter(driver=self).aggregate(models.Avg('star'))['star__avg'] or 0.0      
 
 class Admin(User):
     objects = AdminManager()

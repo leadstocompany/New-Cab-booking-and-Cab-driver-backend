@@ -74,11 +74,11 @@ class TripBilleGeneratedAPIView(APIView):
                 "payment_type":trip.payment_type,
                 "ride_type_id":trip.ride_type.id,
                 "ride_type_name":trip.ride_type.cab_class,
-                "driver_id":trip.driver.id,
-                "driver_name":trip.driver.first_name + " " + trip.driver.last_name,
-                "driver_phone":trip.driver.phone,
-                "driver_photo":trip.driver.photo_upload,
-                "driver_rating":get_driver_rating(trip.driver)
+                "customer_id":trip.customer.id,
+                "customer_name":trip.customer.first_name + " " + trip.customer.last_name,
+                "customer_phone":trip.customer.phone,
+                "customer_photo":trip.customer.photo_upload,
+                "driver_rating": trip.driver.get_driver_rating(),
             }
             return Response({"detail": "Bill generate successfully.", "trip_bill":response_data},  status=status.HTTP_200_OK)
         except Trip.DoesNotExist as e:

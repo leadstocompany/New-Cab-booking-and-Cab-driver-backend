@@ -36,7 +36,7 @@ def fcm_push_notification_trip_payment_complete(payment_id):
 
     
     try:
-        title=f"Hello {payment.driver.first_name}  {payment.driver.last_name} , you have to paid for a ride."
+        title=f"Hello {payment.driver.first_name}  {payment.driver.last_name} , you have paid for a ride."
         body=f"Hello {payment.driver.first_name}  {payment.driver.last_name}, you have to receive your ride payment for a ride from {payment.trip.source} to {payment.trip.destination} and payment reveived successfuly "
         response_data=send_fcm_notification(payment.driver.fcm_token, title, body)
         print(f'FCM notification {payment.trip.id}: {response_data}')

@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'drf_yasg',
     'storages',
-    'corsheaders',
+    'corsheaders', 
     'channels',
     'accounts',
     'cabs',
@@ -300,13 +300,13 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'handlers': ['file'],
+            'level': 'INFO',
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'handlers': ['file'],
+            'level': 'INFO',
             'propagate': False,
         },
         'JLP_MyRide': {  # Replace 'myapp' with the name of your app

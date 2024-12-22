@@ -133,6 +133,7 @@ class CustomerRegisterAPI(views.APIView):
             customer = Customer.objects.create(
                 phone=phone, code=create_ref_code())
 
+            CustomerPhoneVerify.objects.get_or_create(user=customer)
             if phone and referrer:
                 if not Customer.objects.filter(code=referrer).exists():
                     return Response(data={"status": False, 'data': "referrel code donesn't exist"}, status=status.HTTP_400_BAD_REQUEST)

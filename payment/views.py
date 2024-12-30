@@ -42,8 +42,8 @@ class TripBilleGeneratedAPIView(APIView):
                 arrived_time_after_5_min = trip.driver_arrived_at_pickup_time + timedelta(minutes=5)
                 # Calculate the waiting time
                 waiting_time = trip.ride_start_time - arrived_time_after_5_min
-                # Output the waiting time in minutes
-                waiting_time_in_minutes = waiting_time.total_seconds() / 60
+                # Calculate the waiting time and round to 4 digits
+                waiting_time_in_minutes = round(waiting_time.total_seconds() / 60, 1)
                 cabbookingprice=CabBookingPrice.objects.get(id=trip.ride_type.id)
                 waiting_fare_per_minute=cabbookingprice.waiting_fare_per_minute
                 waiting_charge= int(waiting_time_in_minutes) * waiting_fare_per_minute

@@ -40,10 +40,14 @@ class TripBilleGeneratedAPIView(APIView):
             # Add 5 minutes to the driver's arrival time
             if trip.driver_arrived_at_pickup_time and trip.ride_start_time:
                 arrived_time_after_5_min = trip.driver_arrived_at_pickup_time + timedelta(minutes=5)
-                # Calculate the waiting time
-                waiting_time = trip.ride_start_time - arrived_time_after_5_min
+                # Only calculate waiting time if ride started after the 5 minute grace period
+                waiting_time = (
+                    trip.ride_start_time - arrived_time_after_5_min
+                    if trip.ride_start_time > arrived_time_after_5_min
+                    else timedelta(minutes=0)
+                )
                 # Calculate the waiting time and round to 4 digits
-                waiting_time_in_minutes = round(waiting_time.total_seconds() / 60, 1)
+                waiting_time_in_minutes = round(waiting_time.total_seconds() / 60, 2)
                 cabbookingprice=CabBookingPrice.objects.get(id=trip.ride_type.id)
                 waiting_fare_per_minute=cabbookingprice.waiting_fare_per_minute
                 waiting_charge= int(waiting_time_in_minutes) * waiting_fare_per_minute

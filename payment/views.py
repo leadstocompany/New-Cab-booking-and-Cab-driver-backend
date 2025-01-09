@@ -6,7 +6,7 @@ from django.db.models import Q
 import math
 from django.core.exceptions import ObjectDoesNotExist
 from trips.models import *
-from payment.tasks import trip_bill_generate_task,trip_payment_complete_task
+from payment.tasks import send_payment_confirmation_email, trip_bill_generate_task,trip_payment_complete_task
 import stripe
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
@@ -447,6 +447,7 @@ class UpdateTripPaymentSuccessView(APIView):
             driver_wallet.balance += amount
             driver_wallet.save()
             fcm_push_notification_trip_payment_complete(payment.id)
+            send_payment_confirmation_email.delay(payment.id)
             trip_payment_complete_task.delay(payment.id)
             return JsonResponse({'status': 'success'}, status=200)
         except Bill_Payment.DoesNotExist as e:

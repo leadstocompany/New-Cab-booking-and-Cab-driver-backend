@@ -12,7 +12,6 @@
         .primary-bg {
             background-color: #232b42;
         }
-
         .container-bg {
             background-color: #232b4205;
         }
@@ -34,24 +33,28 @@
             <div class="trip-detail text-sm">
                 <div class="d-flex justify-content-between align-items-center">
                     <span>Trip ID</span>
-                    <span>WI989dhddh</span>
+                    <span>{{ payment.trip.id }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
-                    <span>Time of Ride</span>
-                    <span>Dec 3rd 11:21 AM</span>
+                    <span>Ride Start Time</span>
+                    <span>{{  payment.trip.ride_start_time }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Ride End Time</span>
+                    <span>{{  payment.trip.ride_end_time }}</span>
                 </div>
             </div>
             <div class="trip-amount bg-white my-3 py-2">
                 <div class="d-flex justify-content-center align-items-center flex-column rounded">
                     <p class="m-0">Total</p>
-                    <h4 class="mb-0">77.00</h4>
+                    <h4 class="mb-0">{{ payment.amount }}</h4>
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-6">
                     <div class="distance bg-white mb-sm-3 py-2">
                         <div class="d-flex justify-content-center align-items-center flex-column rounded">
-                            <p class="m-0">8.40 kms</p>
+                            <p class="m-0">{{ payment.trip.distance }}</p>
                             <p class="text-sm mb-0">Distance</p>
                         </div>
                     </div>
@@ -59,36 +62,59 @@
                 <div class="col-6">
                     <div class="duration bg-white py-2 mb-sm-3">
                         <div class="d-flex justify-content-center align-items-center flex-column rounded">
-                            <p class="m-0">11.33 mins</p>
+                            <p class="m-0">{{ payment.trip.time }}</p>
                             <p class="text-sm mb-0">Duration</p>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="driver-details bg-white p-2 text-sm mb-3">
+                <h6>Driver Details</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Name</span>
+                    <span>{{ payment.trip.driver.full_name }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Contact</span>
+                    <span>{{ payment.trip.driver.phone }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Vehicle</span>
+                    <span>{{ payment.trip.cab.cab_type.cab_type }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>License Plate</span>
+                    <span>{{ payment.trip.cab.number_plate }}</span>
+                </div>
+            </div>
             <div class="location-section">
                 <div class="location-pin">
-                    <p class="fs-6">📍 Pickup: Coimbatore, Tamil Nadu
+                    <p class="fs-6">📍 Pickup: {{ payment.trip.source }}</p>
                 </div>
                 <div class="location-pin">
-                    <p>📍 Drop: Chennai, Tamil Nadu</p>
+                    <p>📍 Drop: {{ payment.trip.destination }}</p>
                 </div>
             </div>
             <div class="bill-details bg-white p-2 text-sm">
                 <h6>Bill Details</h6>
                 <div class="d-flex justify-content-between align-items-center">
-                    <span>Total Amount</span>
-                    <span>77.00</span>
+                    <span>Rent Price</span>
+                    <span>{{ payment.trip.rent_price }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
-                    <span>Paid Using</span>
-                    <span>Cash</span>
+                    <span>Waiting Time Charge</span>
+                    <span>{{ payment.trip.waiting_charge }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Total Amount</span>
+                    <span>{{ payment.trip.total_fare }}</span>
                 </div>
             </div>
-            <div class="query my-3 ">
+            <div class="query my-3">
                 <p>If you have any questions or need assistance, please contact our support team by clicking the button below</p>
             </div>
             <div class="d-flex justify-content-center align-items-center">
-                <a href="mailto:support@jomlah.com" class="btn primary-bg text-white btn-sm">Contact Support</a>
+                <a href="mailto:{{ support_email }}" class="btn primary-bg text-white btn-sm">Contact Support</a>
             </div>
             <footer class="text-center primary-bg-10 p-2 rounded mt-3">
                 <p class="m-0">Thanks for using <strong class="primary-color">Jomlah</strong></p>

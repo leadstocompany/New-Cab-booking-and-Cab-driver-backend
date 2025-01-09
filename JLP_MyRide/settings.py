@@ -318,4 +318,11 @@ LOGGING = {
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
 
+# from email
+DEFAULT_FROM_EMAIL = "leadstocompany@gmail.com"
 
+# Looking to send emails in production? Check out our Email API/SMTP product!
+EMAIL_HOST = env('EMAIL_HOST')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = env('EMAIL_PORT')

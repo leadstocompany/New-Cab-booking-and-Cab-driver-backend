@@ -1,10 +1,17 @@
 from celery import shared_task
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from JLP_MyRide import settings
 from trips.models import Trip
 from utility.rating import get_driver_rating
 from payment.models import Bill_Payment
 from utility.fcm_notification import send_fcm_notification
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.utils import timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 @shared_task
 def trip_bill_generate_task(trip_id):
@@ -86,9 +93,23 @@ def trip_payment_complete_task(payment_id):
         passenger_data
         
     )
-    
 
+@shared_task
+def send_payment_confirmation_email(payment_id):
+    payment = Bill_Payment.objects.get(id=payment_id)
+    context = {
+        'payment': payment,
+        "support_email": settings.DEFAULT_FROM_EMAIL
+    }
 
+    html_message = render_to_string('emails/payment_confirmation.html', context)
 
+    send_mail(
+        subject='Payment Confirmation',
+        message='',  # Plain text version
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[payment.passenger.email],
+        html_message=html_message,
+    )
 
 

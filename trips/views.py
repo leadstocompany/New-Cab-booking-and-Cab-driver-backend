@@ -65,7 +65,7 @@ class BookingRequestView(APIView):
         pickup_longitude=request.data.get('pickup_longitude')
         dropup_latitude=request.data.get('dropup_latitude')
         dropup_longitude= request.data.get('dropup_longitude')
-        ride_type_id = request.data.get('ride_type')
+        ride_type_id = request.data.get('ride_type', None)
         trip_rent_price = request.data.get('trip_rent_price')
         scheduled_datetime=request.data.get('scheduled_datetime', None)
         payment_type= request.data.get('payment_type')

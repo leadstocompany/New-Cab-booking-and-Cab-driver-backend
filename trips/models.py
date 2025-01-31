@@ -37,7 +37,7 @@ class Trip(BaseModel):
         validators=[MinValueValidator(Decimal('0.00'))]
     )
     time = models.CharField(max_length=74, null=True, blank=True)
-    ride_type = models.ForeignKey(CabClass, on_delete=models.CASCADE)
+    ride_type = models.ForeignKey(CabClass, on_delete=models.CASCADE, null=True, blank=True)
     otp_count = models.PositiveIntegerField(default=1)
     order_id = models.TextField(max_length=74, null=True, blank=True)
     rent_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))], default=0, null=True, blank=True)

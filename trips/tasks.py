@@ -3,6 +3,7 @@
 from celery import shared_task
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from trips.fcm_notified_task import fcm_push_notification_trip_booking_request_to_drivers
 from trips.models import Trip
 from trips.notifications import booking_request_notify_driver, notify_trip_booked, send_real_time_notification, notify_trip_request_cancel
 # notify_trip_booking_closed,
@@ -19,6 +20,10 @@ from utility.fcm_notification import send_fcm_notification
 from accounts.models import Driver
 import requests
 import logging
+from trips.models import Trip
+from utility.nearest_driver_list import get_nearest_driver_list
+
+
 logger = logging.getLogger(__name__)
 
 # @shared_task
@@ -84,6 +89,17 @@ def booking_request_notify_drivers(trip_id,driver_ids, scheduled_datetime):
     except Exception as e:
         logger.error(f"Celery Error occurred: {e}")
         print("celery error :", e)
+
+@shared_task
+def schedule_driver_notifications(trip_id, pickup_latitude, pickup_longitude, scheduled_datetime):
+    trip = Trip.objects.get(id=trip_id)
+    
+    # Get nearest drivers at notification time
+    drivers=get_nearest_driver_list(trip.id, pickup_latitude, pickup_longitude)
+    driver_ids = [driver.id for driver in drivers]
+    fcm_push_notification_trip_booking_request_to_drivers(trip.id,drivers, scheduled_datetime)
+    booking_request_notify_drivers.delay(trip.id,driver_ids, scheduled_datetime)
+
 
 @shared_task
 def notify_trip_accepted(trip_id):

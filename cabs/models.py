@@ -96,6 +96,7 @@ class CabBookingPrice(models.Model):
     base_fare = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="base fare for per kms")
     # extra_km_fare = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="extra km fare")
     waiting_fare_per_minute = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="waiting fare per minute")
+    scheduled_trip_fare_precentage = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     class Meta:
         db_table = 'cabbookingprice'
     objects=models.Manager()

@@ -10,10 +10,12 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import IntegrityError, transaction
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from utility.model import BaseModel
+from utility.util import calculate_percentage_change
 def create_ref_code():
     while True:
         # Generate a random 5-character string
@@ -149,7 +151,53 @@ class User(AbstractUser):
     
     def get_driver_rating(self):
         TripRating = import_module("trips.models").TripRating
-        return TripRating.objects.filter(driver=self).aggregate(models.Avg('star'))['star__avg'] or 0.0      
+        return TripRating.objects.filter(driver=self).aggregate(models.Avg('star'))['star__avg'] or 0.0
+
+    @classmethod
+    def get_recent_drivers(cls):
+        drivers = cls.objects.filter(
+            type=cls.Types.DRIVER 
+        ).order_by('-date_joined')[:3] 
+        
+        driver_data = []
+        for driver in drivers:
+            from importlib import import_module
+            Vehicle = import_module("cabs.models").Vehicle
+            vehicle = Vehicle.objects.filter(driver=driver).first()
+            driver_info = {
+                'id': driver.id,
+                'name': f"{driver.first_name} {driver.last_name}",
+                'join_date': driver.date_joined.strftime("%d/%m/%Y"),
+                'vehicle_type': vehicle.cab_type.cab_type if vehicle and vehicle.cab_type else None,
+                'status': driver.profile_status,
+                'phone': driver.phone,
+                'vehicle_number': vehicle.number_plate if vehicle else None
+            }
+            driver_data.append(driver_info)
+
+        return driver_data
+        
+    @classmethod
+    def get_new_users_stats(cls):
+        today = timezone.now()
+        current_month_start = today.replace(day=1)
+        last_month_start = current_month_start - relativedelta(months=1)
+        
+        current_users = cls.objects.filter(
+            date_joined__gte=current_month_start
+        ).count()
+        
+        last_month_users = cls.objects.filter(
+            date_joined__gte=last_month_start,
+            date_joined__lt=current_month_start
+        ).count()
+        
+        percentage = calculate_percentage_change(last_month_users, current_users)
+        
+        return {
+            'count': current_users,
+            'percentage': percentage
+        }
 
 class Admin(User):
     objects = AdminManager()

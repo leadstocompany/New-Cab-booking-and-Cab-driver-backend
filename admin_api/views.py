@@ -8,6 +8,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.authtoken.models import Token
+from utility.nearest_driver_list import get_all_available_drivers
 from utility.otp import send_otp
 from rest_framework import viewsets
 from rest_framework.authentication import TokenAuthentication
@@ -59,6 +60,26 @@ class LogoutView(views.APIView):
         # Delete the user's authentication token to log them out
         response=auth_utility.logout_view(request)
         return response
+
+class DashboardAPI(views.APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        return Response(
+            {
+            "available_drivers": get_all_available_drivers(),
+            "income_stats": Trip.get_income_stats(),
+            "trip_stats": {
+                "booked_trips": Trip.get_booked_trips_stats(),
+                "cancelled_trips": Trip.get_cancelled_trips_stats(),
+                "new_users": User.get_new_users_stats(),
+                "total_earnings": Trip.get_total_earnings_stats(),
+            },
+            "latest_drivers": User.get_recent_drivers(),
+        }, status=status.HTTP_200_OK
+        )
        
 class AdminProfileView(views.APIView):
     serializer_class = AdminProfileSerializer

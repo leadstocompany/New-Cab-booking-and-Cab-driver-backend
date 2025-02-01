@@ -109,6 +109,7 @@ class AcceptTripView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     def post(self, request, *args, **kwargs):
         trip_id = request.data.get('trip_id')
+        ride_type_id = request.data.get('ride_type_id', None)
         
         driver= request.user
         cab=Vehicle.objects.filter(driver=driver).first()
@@ -118,6 +119,8 @@ class AcceptTripView(APIView):
 
         trip.driver = driver
         trip.cab=cab
+        if ride_type_id:
+            trip.ride_type_id = ride_type_id
         trip.status = 'BOOKED'
         trip.save()
         fcm_push_notification_trip_accepted(trip_id)
@@ -141,6 +144,7 @@ class CancelTripView(APIView):
         trip_id = request.data.get('trip_id')
         user = request.user
         cancel_reason = request.data.get('cancel_reason')
+        ride_type_id = request.data.get('ride_type_id', None)
 
         try:
             trip = Trip.objects.get(id=trip_id)
@@ -148,6 +152,8 @@ class CancelTripView(APIView):
                 trip.status = 'CANCELLED'
                 trip.canceled_by = user
                 trip.cancel_reason = cancel_reason
+                if ride_type_id:
+                    trip.ride_type_id = ride_type_id
                 trip.save()
                 if user.type == User.Types.DRIVER:
                     fcm_push_notification_trip_cancelled(trip_id,'customer', cancel_reason)

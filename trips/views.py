@@ -93,16 +93,15 @@ class BookingRequestView(APIView):
         # Notify drivers asynchronously
         if scheduled_datetime:
             # Notify driver 15 minutes before scheduled time
-            
-            # For timestamp format: "2025-01-31T22:05:00.000Z"
             scheduled_datetime = datetime.strptime(scheduled_datetime, '%Y-%m-%dT%H:%M:%S.%fZ')
             scheduled_datetime = pytz.utc.localize(scheduled_datetime)
             notification_time = scheduled_datetime - timedelta(minutes=15)
-
-            schedule_driver_notifications.apply_async(args=[140, pickup_latitude, pickup_longitude, scheduled_datetime], eta=notification_time)
+            schedule_driver_notifications.apply_async(
+                args=[trip.id, pickup_latitude, pickup_longitude, scheduled_datetime],
+                eta=notification_time
+            )
         else:
-            # Notify drivers immediately when trip is requested
-            schedule_driver_notifications.delay(140, pickup_latitude, pickup_longitude, scheduled_datetime)
+            schedule_driver_notifications.delay(trip.id, pickup_latitude, pickup_longitude, None)
        
         return Response({"detail": "Booking request sent to nearest drivers.", "otp":otp, 'trip_id':trip.id}, status=status.HTTP_200_OK)
 

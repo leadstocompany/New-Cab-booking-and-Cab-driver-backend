@@ -91,7 +91,7 @@ def booking_request_notify_drivers(trip_id,driver_ids, scheduled_datetime):
         print("celery error :", e)
 
 @shared_task
-def schedule_driver_notifications(trip_id, pickup_latitude, pickup_longitude, scheduled_datetime):
+def schedule_driver_notifications(trip_id, pickup_latitude, pickup_longitude, scheduled_datetime=None):
     trip = Trip.objects.get(id=trip_id)
     
     # Get nearest drivers at notification time

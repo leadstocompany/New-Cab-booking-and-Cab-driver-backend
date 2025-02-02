@@ -32,4 +32,5 @@ urlpatterns = [
     path('active-city/', views.ActiveCityListView.as_view(), name='active-city-list'),
     path('add-fcm-token/', views.SaveFCMTokenView.as_view(), name='save-fcm-token'),
     path('driver-duty-on-off/', views.DriverDutyOnOffView.as_view(), name='drive-duaty-onoff'),
+    path('driver/analytics/', views.DriverAnalyticsView.as_view(), name='driver-analytics'),
 ]

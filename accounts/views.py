@@ -16,6 +16,8 @@ from rest_framework import viewsets
 from accounts.serializers import *
 from rest_framework.views import APIView
 from JLP_MyRide import settings
+from django.db.models import Sum, Count
+from dateutil.relativedelta import relativedelta
 import logging
 logger = logging.getLogger(__name__)
 import stripe
@@ -480,3 +482,64 @@ class DriverDutyOnOffView(APIView):
             logger.error(f"Error occurred: {e}")
             return Response({"error":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
 
+
+class DriverAnalyticsView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        driver = request.user
+        month = request.query_params.get('month')
+        
+        # Base query for completed trips
+        base_query = Trip.objects.filter(
+            driver=driver,
+            status='COMPLETED',
+            payment_status='paid'
+        )
+
+        if month:
+            # Filter for specific month
+            base_query = base_query.filter(
+                ride_end_time__month=month,
+                ride_end_time__year=timezone.now().year
+            )
+        else:
+            # Get last 6 months data
+            six_months_ago = timezone.now() - relativedelta(months=6)
+            base_query = base_query.filter(ride_end_time__gte=six_months_ago)
+
+        # Calculate metrics
+        total_rides = base_query.count()
+        total_income = base_query.aggregate(Sum('total_fare'))['total_fare__sum'] or 0
+        total_distance = base_query.aggregate(Sum('distance'))['distance__sum'] or 0
+
+        # Get month-wise breakdown
+        monthly_data = []
+        for i in range(6):
+            month_date = timezone.now() - relativedelta(months=i)
+            month_stats = base_query.filter(
+                ride_end_time__month=month_date.month,
+                ride_end_time__year=month_date.year
+            ).aggregate(
+                rides=Count('id'),
+                income=Sum('total_fare'),
+                distance=Sum('distance')
+            )
+            
+            monthly_data.append({
+                'month_name': month_date.strftime('%B %Y'),
+                'month': month_date.month,
+                'year': month_date.year,
+                'rides': month_stats['rides'] or 0,
+                'income': month_stats['income'] or 0,
+                'distance': month_stats['distance'] or 0
+            })
+
+        response_data = {
+            'total_rides': total_rides,
+            'total_income': total_income,
+            'total_distance': total_distance,
+            'monthly_breakdown': monthly_data
+        }
+
+        return Response(response_data)

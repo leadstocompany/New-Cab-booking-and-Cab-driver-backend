@@ -27,6 +27,9 @@ apscheduler = "^3.11.0"
 whitenoise = "^6.8.2"
 gunicorn = "^23.0.0"
 redis = "^5.2.1"
+cloudinary = "^1.42.1"
+django-cloudinary-storage = "^0.3.0"
+pillow = "^11.1.0"
 
 
 [build-system]

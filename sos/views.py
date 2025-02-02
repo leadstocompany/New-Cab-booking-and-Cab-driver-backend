@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .models import SOSHelpRequest
-from .serializers import SOSHelpRequestSerializer
+from .models import SOSHelpRequest, SOSMessage
+from .serializers import SOSHelpRequestSerializer, SOSMessageSerializer
 from rest_framework import generics
 from .tasks import send_sos_notification
 from utility.permissions import IsAdminOrSuperuser
@@ -40,3 +40,25 @@ class SOSHelpRequestDetailView(generics.RetrieveAPIView):
         except SOSHelpRequest.DoesNotExist as e:
             logger.error(f"Error occurred: {e}")
             return Response({"error": "SOSHelpRequest entry not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+class SOSMessageCreateView(generics.CreateAPIView):
+    queryset = SOSMessage.objects.all()
+    serializer_class = SOSMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class SOSMessageListView(generics.ListAPIView):
+    queryset = SOSMessage.objects.all()
+    serializer_class = SOSMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class SOSMessageUpdateView(generics.UpdateAPIView):
+    queryset = SOSMessage.objects.all()
+    serializer_class = SOSMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'pk'
+
+class SOSMessageDeleteView(generics.DestroyAPIView):
+    queryset = SOSMessage.objects.all()
+    serializer_class = SOSMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'pk'

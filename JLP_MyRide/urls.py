@@ -55,6 +55,7 @@ urlpatterns = [
     path('referrance/', include('referrance.urls')),
     # path('car-booking-api/', include('car_booking_api.urls')),
     path('admin-api/', include('admin_api.urls')),
+    path('notifications/', include('notifications.urls')),
     re_path(r'^', include(routing.websocket_urlpatterns)),
 ]
 urlpatterns  +=  static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

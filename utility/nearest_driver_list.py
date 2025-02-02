@@ -56,3 +56,39 @@ def get_nearest_driver_list(trip_id, latitude, longitude):
         return nearby_drivers
     except Exception as e:
         logger.error(f"Error occurred: {e}")
+
+
+def get_all_available_drivers():
+    """Get list of all available drivers"""
+    try:
+        # Get drivers who are on duty and not on active trips
+        active_trip_statuses = ['ACCEPTED', 'BOOKED', 'ON_TRIP']
+        available_drivers = User.objects.filter(
+            type=User.Types.DRIVER, 
+            driver_duty=True
+        ).exclude(
+            Q(driver_trips__status__in=active_trip_statuses)
+        ).distinct()
+
+        logger.debug("Retrieved all available drivers list")
+        # return available_drivers
+        drivers_ = []
+        for driver in available_drivers:
+            try:
+                current_location = CurrentLocation.objects.get(user=driver)
+                drivers_.append(
+                    {
+                        "id": driver.id,
+                        "latitude": current_location.current_latitude,
+                        "longitude": current_location.current_longitude,
+
+                    }
+                )
+            except CurrentLocation.DoesNotExist as e:
+                logger.error(f"Error occurred: {e}")
+                continue  
+        return drivers_
+    except Exception as e:
+        logger.error(f"Error getting available drivers: {e}")
+
+

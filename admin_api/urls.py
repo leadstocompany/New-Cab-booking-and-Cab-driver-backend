@@ -9,6 +9,9 @@ urlpatterns = [
     path('logout', views.LogoutView.as_view(),),
     path('profile', views.AdminProfileView.as_view(),),
     path('profile/update',views.AdminProfileUpdateView.as_view()),
+
+    # dashboard urls
+    path('dashboard', views.DashboardAPI.as_view(),),
     
     # vehicle urls 
     path('vehicle-type', views.VehicleTypeListCreateView.as_view(),),

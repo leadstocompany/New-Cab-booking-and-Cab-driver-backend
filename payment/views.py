@@ -38,6 +38,7 @@ class TripBilleGeneratedAPIView(APIView):
             trip = Trip.objects.get(id=trip_id, driver=request.user)
             base_fare= trip.rent_price
             # Add 5 minutes to the driver's arrival time
+            cabbookingprice=CabBookingPrice.objects.get(id=trip.ride_type.id)
             if trip.driver_arrived_at_pickup_time and trip.ride_start_time:
                 arrived_time_after_5_min = trip.driver_arrived_at_pickup_time + timedelta(minutes=5)
                 # Only calculate waiting time if ride started after the 5 minute grace period
@@ -48,10 +49,8 @@ class TripBilleGeneratedAPIView(APIView):
                 )
                 # Calculate the waiting time and round to 4 digits
                 waiting_time_in_minutes = round(waiting_time.total_seconds() / 60, 2)
-                cabbookingprice=CabBookingPrice.objects.get(id=trip.ride_type.id)
                 waiting_fare_per_minute=cabbookingprice.waiting_fare_per_minute
                 waiting_charge= int(waiting_time_in_minutes) * waiting_fare_per_minute
-                
                 total_fare=base_fare + waiting_charge
             else:
                 waiting_charge=0
@@ -62,6 +61,12 @@ class TripBilleGeneratedAPIView(APIView):
             trip.waiting_charge=waiting_charge
             trip.waiting_time= waiting_time_in_minutes
             trip.total_fare=total_fare
+
+            # Calculate the update total fare for schedules trip based on specific cabclass schedule fare percentage
+            if trip.scheduled_datetime:
+                schedules_trip_fare_total_percentage = cabbookingprice.scheduled_trip_fare_precentage * trip.distance
+                trip.total_fare += (base_fare * schedules_trip_fare_total_percentage) / 100
+
             trip.save()
             # trip_bill_generate_task.delay(trip.id)
             response_data={

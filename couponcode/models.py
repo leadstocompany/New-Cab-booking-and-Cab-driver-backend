@@ -11,6 +11,7 @@ class Coupon(models.Model):
     discount = models.DecimalField(max_digits=5, decimal_places=2)
     valid_from = models.DateTimeField()
     valid_to = models.DateTimeField()
+    use_count = models.IntegerField(default=0)
     active = models.BooleanField(default=True)
 
     def __str__(self):

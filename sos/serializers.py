@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SOSHelpRequest
+from .models import SOSHelpRequest, SOSMessage
 from trips.serializers import TripSerializer
 from accounts.serializers import UserProfileSerializer
 class SOSHelpRequestSerializer(serializers.ModelSerializer):
@@ -10,3 +10,8 @@ class SOSHelpRequestSerializer(serializers.ModelSerializer):
         self.fields['user'] =  UserProfileSerializer(read_only=True)
         self.fields['trip'] =  TripSerializer(read_only=True)
         return super(SOSHelpRequestSerializer, self).to_representation(instance)
+
+class SOSMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SOSMessage
+        fields = ["message"]

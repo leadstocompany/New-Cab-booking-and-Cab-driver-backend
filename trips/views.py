@@ -9,7 +9,7 @@ from trips.models import *
 from trips.serializers import *
 from admin_api.serializers import FeedbackSettingSerializer, DriverFeedbackPageSerializer
 from admin_api.models import FeedbackSetting, DriverFeedbackPage
-from trips.tasks import booking_request_notify_drivers, notify_trip_accepted, notify_trip_cancelled, notify_trip_started,  notify_trip_completed, send_trip_schedule_notification, notify_arrived_at_pickup,notify_trip_request_cancel
+from trips.tasks import booking_request_notify_drivers, notify_trip_accepted, notify_trip_cancelled, notify_trip_started,  notify_trip_completed, schedule_driver_notifications, send_trip_schedule_notification, notify_arrived_at_pickup,notify_trip_request_cancel
 from trips.fcm_notified_task import fcm_push_notification_trip_booking_request_to_drivers, fcm_push_notification_trip_accepted, fcm_push_notification_trip_cancelled, fcm_push_notification_trip_started, fcm_push_notification_trip_completed, fcm_push_notification_arrived_at_pickup, send_fcm_notification_schedule
 from utility.nearest_driver_list import get_nearest_driver_list
 import random
@@ -22,6 +22,7 @@ import stripe
 import json
 from utility.rating import get_driver_rating
 import logging
+import pytz
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -64,7 +65,7 @@ class BookingRequestView(APIView):
         pickup_longitude=request.data.get('pickup_longitude')
         dropup_latitude=request.data.get('dropup_latitude')
         dropup_longitude= request.data.get('dropup_longitude')
-        ride_type_id = request.data.get('ride_type')
+        ride_type_id = request.data.get('ride_type', None)
         trip_rent_price = request.data.get('trip_rent_price')
         scheduled_datetime=request.data.get('scheduled_datetime', None)
         payment_type= request.data.get('payment_type')
@@ -90,11 +91,17 @@ class BookingRequestView(APIView):
         )
 
         # Notify drivers asynchronously
-        drivers=get_nearest_driver_list(trip.id, pickup_latitude, pickup_longitude)
-        driver_ids = [driver.id for driver in drivers]
-        fcm_push_notification_trip_booking_request_to_drivers(trip.id,drivers, scheduled_datetime)
-        booking_request_notify_drivers.delay(trip.id,driver_ids, scheduled_datetime)
-        # fcm_push_notification_trip_booking_request_to_drivers(trip.id,drivers, scheduled_datetime)
+        if scheduled_datetime:
+            # Notify driver 15 minutes before scheduled time
+            scheduled_datetime = datetime.strptime(scheduled_datetime, '%Y-%m-%dT%H:%M:%S.%fZ')
+            scheduled_datetime = pytz.utc.localize(scheduled_datetime)
+            notification_time = scheduled_datetime - timedelta(minutes=15)
+            schedule_driver_notifications.apply_async(
+                args=[trip.id, pickup_latitude, pickup_longitude, scheduled_datetime],
+                eta=notification_time
+            )
+        else:
+            schedule_driver_notifications.delay(trip.id, pickup_latitude, pickup_longitude, None)
        
         return Response({"detail": "Booking request sent to nearest drivers.", "otp":otp, 'trip_id':trip.id}, status=status.HTTP_200_OK)
 
@@ -102,6 +109,7 @@ class AcceptTripView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     def post(self, request, *args, **kwargs):
         trip_id = request.data.get('trip_id')
+        ride_type_id = request.data.get('ride_type_id', None)
         
         driver= request.user
         cab=Vehicle.objects.filter(driver=driver).first()
@@ -111,6 +119,8 @@ class AcceptTripView(APIView):
 
         trip.driver = driver
         trip.cab=cab
+        if ride_type_id:
+            trip.ride_type_id = ride_type_id
         trip.status = 'BOOKED'
         trip.save()
         fcm_push_notification_trip_accepted(trip_id)
@@ -134,6 +144,7 @@ class CancelTripView(APIView):
         trip_id = request.data.get('trip_id')
         user = request.user
         cancel_reason = request.data.get('cancel_reason')
+        ride_type_id = request.data.get('ride_type_id', None)
 
         try:
             trip = Trip.objects.get(id=trip_id)
@@ -141,6 +152,8 @@ class CancelTripView(APIView):
                 trip.status = 'CANCELLED'
                 trip.canceled_by = user
                 trip.cancel_reason = cancel_reason
+                if ride_type_id:
+                    trip.ride_type_id = ride_type_id
                 trip.save()
                 if user.type == User.Types.DRIVER:
                     fcm_push_notification_trip_cancelled(trip_id,'customer', cancel_reason)

@@ -3,6 +3,7 @@ from base64 import b32encode
 from importlib import import_module
 
 # from django.contrib.auth.base_user import BaseUserManager
+from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -10,10 +11,14 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import IntegrityError, transaction
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
-from utility.model import BaseModel
+from utility.util import calculate_percentage_change
+from utility.model import BaseModel, CloudinaryBaseModelUser, CloudinaryBaseModel
+from cloudinary.models import CloudinaryField
+
 def create_ref_code():
     while True:
         # Generate a random 5-character string
@@ -93,7 +98,7 @@ class AdminManager(models.Manager):
         queryset = queryset.filter(type=User.Types.ADMIN)
         return queryset
 
-class User(AbstractUser):
+class User(AbstractUser, CloudinaryBaseModelUser):
     class Types(models.TextChoices):
         DRIVER = "DRIVER", "driver"
         CUSTOMER = "CUSTOMER", "customer"
@@ -123,7 +128,7 @@ class User(AbstractUser):
 
     alternate_number = models.CharField(max_length=74, null=True, blank=True)
   
-    photo_upload = models.TextField(null=True, blank=True)
+    photo_upload = CloudinaryField(null=True, blank=True)
     user_doc = models.JSONField(default=None, null=True, blank=True) 
     terms_policy = models.BooleanField(default=False)
     myride_insurance = models.BooleanField(default=False)
@@ -140,6 +145,12 @@ class User(AbstractUser):
     def __str__(self):
         return self.full_name
 
+    def get_cloudinary_folder(self, field_name):
+        return f"accounts/{self.phone}"
+
+    def get_file_fields(self):
+        return ['photo_upload']
+
     @property
     def full_name(self):
         return self.phone
@@ -149,7 +160,53 @@ class User(AbstractUser):
     
     def get_driver_rating(self):
         TripRating = import_module("trips.models").TripRating
-        return TripRating.objects.filter(driver=self).aggregate(models.Avg('star'))['star__avg'] or 0.0      
+        return TripRating.objects.filter(driver=self).aggregate(models.Avg('star'))['star__avg'] or 0.0
+
+    @classmethod
+    def get_recent_drivers(cls):
+        drivers = cls.objects.filter(
+            type=cls.Types.DRIVER 
+        ).order_by('-date_joined')[:3] 
+        
+        driver_data = []
+        for driver in drivers:
+            from importlib import import_module
+            Vehicle = import_module("cabs.models").Vehicle
+            vehicle = Vehicle.objects.filter(driver=driver).first()
+            driver_info = {
+                'id': driver.id,
+                'name': f"{driver.first_name} {driver.last_name}",
+                'join_date': driver.date_joined.strftime("%d/%m/%Y"),
+                'vehicle_type': vehicle.cab_type.cab_type if vehicle and vehicle.cab_type else None,
+                'status': driver.profile_status,
+                'phone': driver.phone,
+                'vehicle_number': vehicle.number_plate if vehicle else None
+            }
+            driver_data.append(driver_info)
+
+        return driver_data
+        
+    @classmethod
+    def get_new_users_stats(cls):
+        today = timezone.now()
+        current_month_start = today.replace(day=1)
+        last_month_start = current_month_start - relativedelta(months=1)
+        
+        current_users = cls.objects.filter(
+            date_joined__gte=current_month_start
+        ).count()
+        
+        last_month_users = cls.objects.filter(
+            date_joined__gte=last_month_start,
+            date_joined__lt=current_month_start
+        ).count()
+        
+        percentage = calculate_percentage_change(last_month_users, current_users)
+        
+        return {
+            'count': current_users,
+            'percentage': percentage
+        }
 
 class Admin(User):
     objects = AdminManager()
@@ -224,9 +281,15 @@ def user_directory_path(instance, filename):
     return 'myride/{0}/{1}'.format(instance.phone, filename)
 
 
-class FileUpload(BaseModel):
-    file = models.FileField(upload_to=user_directory_path, max_length=100)
+class FileUpload(CloudinaryBaseModel):
+    file = CloudinaryField(null=True, blank=True)
     phone = models.CharField(max_length=74)
+
+    def get_cloudinary_folder(self, field_name):
+        return f"accounts/{self.phone}/documents"
+
+    def get_file_fields(self):
+        return ['file']
 
 
 # class CustomerReferral(BaseModel):

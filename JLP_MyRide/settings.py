@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'admin_api',
     'cloudinary',
     'cloudinary_storage',
+    'notifications',
 ]
 
 MIDDLEWARE = [

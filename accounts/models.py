@@ -3,6 +3,7 @@ from base64 import b32encode
 from importlib import import_module
 
 # from django.contrib.auth.base_user import BaseUserManager
+from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -14,8 +15,10 @@ from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
-from utility.model import BaseModel
 from utility.util import calculate_percentage_change
+from utility.model import BaseModel, CloudinaryBaseModelUser, CloudinaryBaseModel
+from cloudinary.models import CloudinaryField
+
 def create_ref_code():
     while True:
         # Generate a random 5-character string
@@ -95,7 +98,7 @@ class AdminManager(models.Manager):
         queryset = queryset.filter(type=User.Types.ADMIN)
         return queryset
 
-class User(AbstractUser):
+class User(AbstractUser, CloudinaryBaseModelUser):
     class Types(models.TextChoices):
         DRIVER = "DRIVER", "driver"
         CUSTOMER = "CUSTOMER", "customer"
@@ -125,7 +128,7 @@ class User(AbstractUser):
 
     alternate_number = models.CharField(max_length=74, null=True, blank=True)
   
-    photo_upload = models.TextField(null=True, blank=True)
+    photo_upload = CloudinaryField(null=True, blank=True)
     user_doc = models.JSONField(default=None, null=True, blank=True) 
     terms_policy = models.BooleanField(default=False)
     myride_insurance = models.BooleanField(default=False)
@@ -141,6 +144,12 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.full_name
+
+    def get_cloudinary_folder(self, field_name):
+        return f"accounts/{self.phone}"
+
+    def get_file_fields(self):
+        return ['photo_upload']
 
     @property
     def full_name(self):
@@ -272,9 +281,15 @@ def user_directory_path(instance, filename):
     return 'myride/{0}/{1}'.format(instance.phone, filename)
 
 
-class FileUpload(BaseModel):
-    file = models.FileField(upload_to=user_directory_path, max_length=100)
+class FileUpload(CloudinaryBaseModel):
+    file = CloudinaryField(null=True, blank=True)
     phone = models.CharField(max_length=74)
+
+    def get_cloudinary_folder(self, field_name):
+        return f"accounts/{self.phone}/documents"
+
+    def get_file_fields(self):
+        return ['file']
 
 
 # class CustomerReferral(BaseModel):

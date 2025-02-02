@@ -15,6 +15,9 @@ import environ
 import os
 import firebase_admin
 from firebase_admin import credentials
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 env = environ.Env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -65,6 +68,8 @@ INSTALLED_APPS = [
     'support',
     'referrance',
     'admin_api',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -319,10 +324,18 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
 
 # from email
-DEFAULT_FROM_EMAIL = "leadstocompany@gmail.com"
+DEFAULT_FROM_EMAIL = "billing@jomlahapp.com"
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST = 'smtp.zoho.com'
+EMAIL_HOST_USER = 'billing@jomlahapp.com'
+EMAIL_HOST_PASSWORD = 'Billingjomlah@123'
 
-# Looking to send emails in production? Check out our Email API/SMTP product!
-EMAIL_HOST = env('EMAIL_HOST')
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = env('EMAIL_PORT')
+
+CLOUDINARY_URL = os.getenv('CLOUDINARY_URL')
+
+CLOUDINARY_STORAGE = {
+    'CLOUDINARY_URL': CLOUDINARY_URL
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

@@ -1,40 +1,51 @@
 from django.db import models
 from accounts.models import *
-from utility.model import BaseModel
-# Create your models here.
-def vehicle_model_directory_path(instance, filename):
-    print(instance.model, "file_name", filename)
-    return 'myride/{0}/{1}'.format(instance.model, filename)
-def vehicle_class_directory_path(instance, filename):
-    
-    return 'myride/{0}/{1}'.format(instance.cab_class, filename)
-def vehicle_type_directory_path(instance, filename):
-    
-    return 'myride/{0}/{1}'.format(instance.type, filename)
+from utility.model import BaseModel, CloudinaryBaseModel
+from cloudinary.models import CloudinaryField
 
-def vehicle_maker_directory_path(instance, filename):
-    return 'myride/{0}/{1}'.format(instance.maker, filename)
-class CabType(BaseModel):
+
+class CabType(CloudinaryBaseModel):
     cab_type = models.CharField(max_length=74, unique=True)
-    icon = models.TextField(null=True, blank=True)
-    # icon = models.FileField(upload_to=vehicle_type_directory_path, null=True, blank=True)
+    # icon = models.TextField(null=True, blank=True)
+    icon = CloudinaryField(null=True, blank=True)
+
     def __str__(self):
         return str(self.cab_type)
     
-class CabClass(BaseModel):
+    def get_cloudinary_folder(self, field_name):
+        return f"cabs/{self.cab_type}"
+
+    def get_file_fields(self):
+        return ['icon']
+
+
+class CabClass(CloudinaryBaseModel):
     cab_class = models.CharField(max_length=200, unique=True)
     cab_type = models.ForeignKey(CabType, on_delete=models.PROTECT)
-    icon = models.TextField(null=True, blank=True)
+    icon = CloudinaryField(null=True, blank=True)
     # icon = models.FileField(upload_to=vehicle_class_directory_path, null=True, blank=True)
     def __str__(self):
         return str(self.cab_class)
+    
+    def get_cloudinary_folder(self, field_name):
+        return f"cabs/{self.cab_type}/{self.cab_class}"
+
+    def get_file_fields(self):
+        return ['icon']
+
 class VehicleMaker(BaseModel):
     maker = models.CharField(max_length=200, unique=True)
     cab_type = models.ForeignKey(CabType, on_delete=models.PROTECT, null=True, blank=True)
-    icon = models.TextField(null=True, blank=True)
+    icon = CloudinaryField(null=True, blank=True)
     # icon = models.FileField(upload_to=vehicle_maker_directory_path, null=True, blank=True)
     def __str__(self):
         return self.maker
+    
+    def get_cloudinary_folder(self, field_name):
+        return f"cabs/{self.cab_type}/{self.maker}"
+
+    def get_file_fields(self):
+        return ['icon']
 
 
 class VehicleModel(BaseModel):
@@ -42,12 +53,18 @@ class VehicleModel(BaseModel):
     cabtype=models.ForeignKey(CabType, on_delete=models.PROTECT, null=True, blank=True)
     cabclass=models.ForeignKey(CabClass, on_delete=models.PROTECT, null=True, blank=True)
     maker = models.ForeignKey(VehicleMaker, on_delete=models.PROTECT)
-    model_image = models.TextField(null=True, blank=True)
+    model_image = CloudinaryField(null=True, blank=True)
     # model_image=models.FileField(upload_to=vehicle_model_directory_path, null=True, blank=True)
     
     # Add image 
     def __str__(self):
         return self.model
+    
+    def get_cloudinary_folder(self, field_name):
+        return f"cabs/{self.cabtype}/{self.cabclass}/{self.maker}/{self.model}"
+
+    def get_file_fields(self):
+        return ['model_image']
     
     
 class Vehicle(BaseModel):

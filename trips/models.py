@@ -65,6 +65,45 @@ class Trip(BaseModel):
         return self.source
     
     @classmethod
+    def get_weekly_income_stats(cls):
+        today = timezone.localtime().date()
+        first_day = today.replace(day=1)
+        
+        if today.month == 12:
+            last_day = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+        else:
+            last_day = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
+        
+        weekly_income = []
+        
+        current_date = first_day
+        week_start = current_date
+        
+        while current_date <= last_day:
+            week_end = min(week_start + timedelta(days=6), last_day)
+            week_label = f"{week_start.day}-{week_end.day}"
+            
+            income = cls.objects.filter(
+                status='COMPLETED',
+                ride_end_time__date__gte=week_start,
+                ride_end_time__date__lte=week_end,
+                payment_status="paid"
+            ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
+
+            weekly_income.append(
+                {
+                    "name": week_label,
+                    "amt": income,
+                }
+            )
+            week_start = week_end + timedelta(days=1)
+            current_date = week_start
+
+        return weekly_income
+
+
+        
+    @classmethod
     def get_income_stats(cls):
         today = timezone.localtime().date()
         
@@ -108,17 +147,18 @@ class Trip(BaseModel):
                 ride_end_time__date__month=month,
                 payment_status="paid"
             ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
-            monthly_income.append({
-                'month': datetime(2000, month, 1).strftime('%B'),
-                'income': income
+            monthly_income.append({ 
+                'name': datetime(today.year, month, 1).strftime('%b'),
+                'amt': income
             })
 
-        return {
+        return { 
             'today_income': today_income,
             'week_income': week_income,
             'month_income': month_income,
             'year_income': year_income,
-            'monthly_breakdown': monthly_income
+            'monthly_breakdown': monthly_income,
+            "weekly_breakdown": cls.get_weekly_income_stats(),
         }
 
     @classmethod
@@ -141,7 +181,7 @@ class Trip(BaseModel):
         
         return {
             'count': current_booked,
-            'percentage': percentage
+            'percentage': round(percentage, 2) 
         }
 
 
@@ -165,7 +205,7 @@ class Trip(BaseModel):
         
         return {
             'count': current_cancelled,
-            'percentage': percentage
+            'percentage': round(percentage, 2) 
         }
 
 
@@ -192,7 +232,7 @@ class Trip(BaseModel):
         
         return {
             'amount': current_earnings,
-            'percentage': percentage
+            'percentage': round(percentage, 2) 
         }
 
 

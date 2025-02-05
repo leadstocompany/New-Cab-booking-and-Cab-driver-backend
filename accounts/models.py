@@ -205,7 +205,7 @@ class User(AbstractUser, CloudinaryBaseModelUser):
         
         return {
             'count': current_users,
-            'percentage': percentage
+            'percentage': round(percentage, 2) 
         }
 
 class Admin(User):

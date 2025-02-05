@@ -78,9 +78,8 @@ def get_all_available_drivers():
                 current_location = CurrentLocation.objects.get(user=driver)
                 drivers_.append(
                     {
-                        "id": driver.id,
-                        "latitude": current_location.current_latitude,
-                        "longitude": current_location.current_longitude,
+                        "lat": float(current_location.current_latitude),
+                        "lng": float(current_location.current_longitude),
 
                     }
                 )

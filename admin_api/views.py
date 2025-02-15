@@ -70,12 +70,22 @@ class DashboardAPI(views.APIView):
         return Response(
             {
             "available_drivers": get_all_available_drivers(),
-            "income_stats": Trip.get_income_stats(),
+            "income_stats": {
+                'today_income': Subscriptions.get_today_income(),
+                'week_income': Subscriptions.get_this_week_income(),
+                'month_income': Subscriptions.get_this_month_income(),
+                'year_income': Subscriptions.get_this_year_income(),
+                "weekly_income_breakdown": Subscriptions.get_weekly_income_breakdown(),
+                "monthly_income_breakdown": Subscriptions.get_monthly_income_breakdown(),
+            },
             "trip_stats": {
                 "booked_trips": Trip.get_booked_trips_stats(),
                 "cancelled_trips": Trip.get_cancelled_trips_stats(),
-                "new_users": User.get_new_users_stats(),
-                "total_earnings": Trip.get_total_earnings_stats(),
+                "completed_trips": Trip.get_completed_trips_stats(),
+                "new_customers": User.get_new_customer_stats(),
+                "new_drivers": User.get_new_driver_stats(),
+                "total_earnings": Subscriptions.get_total_income(),
+
             },
             "latest_drivers": User.get_recent_drivers(),
         }, status=status.HTTP_200_OK

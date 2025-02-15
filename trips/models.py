@@ -60,36 +60,40 @@ class Trip(BaseModel):
     driver_arrived_at_pickup_time=models.DateTimeField(null=True, blank=True)
     ride_start_time=models.DateTimeField(null=True, blank=True)
     ride_end_time=models.DateTimeField(null=True, blank=True)
-    
-      
+
     def __str__(self):
         return self.source
-    
+
     @classmethod
     def get_weekly_income_stats(cls):
         today = timezone.localtime().date()
         first_day = today.replace(day=1)
-        
+
         if today.month == 12:
-            last_day = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+            last_day = today.replace(year=today.year + 1, month=1, day=1) - timedelta(
+                days=1
+            )
         else:
             last_day = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
-        
+
         weekly_income = []
-        
+
         current_date = first_day
         week_start = current_date
-        
+
         while current_date <= last_day:
             week_end = min(week_start + timedelta(days=6), last_day)
             week_label = f"{week_start.day}-{week_end.day}"
-            
-            income = cls.objects.filter(
-                status='COMPLETED',
-                ride_end_time__date__gte=week_start,
-                ride_end_time__date__lte=week_end,
-                payment_status="paid"
-            ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
+
+            income = (
+                cls.objects.filter(
+                    status="COMPLETED",
+                    ride_end_time__date__gte=week_start,
+                    ride_end_time__date__lte=week_end,
+                    payment_status="paid",
+                ).aggregate(models.Sum("total_fare"))["total_fare__sum"]
+                or 0
+            )
 
             weekly_income.append(
                 {
@@ -102,63 +106,73 @@ class Trip(BaseModel):
 
         return weekly_income
 
-
-        
     @classmethod
     def get_income_stats(cls):
         today = timezone.localtime().date()
-        
+
         # Today's income
-        today_income = cls.objects.filter(
-            status='COMPLETED',
-            ride_end_time__date=today,
-            payment_status="paid"
-        ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
+        today_income = (
+            cls.objects.filter(
+                status="COMPLETED", ride_end_time__date=today, payment_status="paid"
+            ).aggregate(models.Sum("total_fare"))["total_fare__sum"]
+            or 0
+        )
 
         # This week's income
         week_start = today - timedelta(days=today.weekday())
-        week_income = cls.objects.filter(
-            status='COMPLETED',
-            ride_end_time__date__gte=week_start,
-            ride_end_time__date__lte=today,
-            payment_status="paid"
-        ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
+        week_income = (
+            cls.objects.filter(
+                status="COMPLETED",
+                ride_end_time__date__gte=week_start,
+                ride_end_time__date__lte=today,
+                payment_status="paid",
+            ).aggregate(models.Sum("total_fare"))["total_fare__sum"]
+            or 0
+        )
 
         # This month's income
-        month_income = cls.objects.filter(
-            status='COMPLETED',
-            ride_end_time__date__year=today.year,
-            ride_end_time__date__month=today.month,
-            payment_status="paid"
-        ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
+        month_income = (
+            cls.objects.filter(
+                status="COMPLETED",
+                ride_end_time__date__year=today.year,
+                ride_end_time__date__month=today.month,
+                payment_status="paid",
+            ).aggregate(models.Sum("total_fare"))["total_fare__sum"]
+            or 0
+        )
 
         # This year's income
-        year_income = cls.objects.filter(
-            status='COMPLETED',
-            ride_end_time__date__year=today.year,
-            payment_status="paid"
-        ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
+        year_income = (
+            cls.objects.filter(
+                status="COMPLETED",
+                ride_end_time__date__year=today.year,
+                payment_status="paid",
+            ).aggregate(models.Sum("total_fare"))["total_fare__sum"]
+            or 0
+        )
 
         # Month-wise income for current year
         monthly_income = []
         for month in range(1, 13):
-            income = cls.objects.filter(
-                status='COMPLETED',
-                ride_end_time__date__year=today.year,
-                ride_end_time__date__month=month,
-                payment_status="paid"
-            ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
-            monthly_income.append({ 
-                'name': datetime(today.year, month, 1).strftime('%b'),
-                'amt': income
-            })
+            income = (
+                cls.objects.filter(
+                    status="COMPLETED",
+                    ride_end_time__date__year=today.year,
+                    ride_end_time__date__month=month,
+                    payment_status="paid",
+                ).aggregate(models.Sum("total_fare"))["total_fare__sum"]
+                or 0
+            )
+            monthly_income.append(
+                {"name": datetime(today.year, month, 1).strftime("%b"), "amt": income}
+            )
 
-        return { 
-            'today_income': today_income,
-            'week_income': week_income,
-            'month_income': month_income,
-            'year_income': year_income,
-            'monthly_breakdown': monthly_income,
+        return {
+            "today_income": today_income,
+            "week_income": week_income,
+            "month_income": month_income,
+            "year_income": year_income,
+            "monthly_breakdown": monthly_income,
             "weekly_breakdown": cls.get_weekly_income_stats(),
         }
 
@@ -167,73 +181,100 @@ class Trip(BaseModel):
         today = timezone.now()
         current_month_start = today.replace(day=1)
         last_month_start = current_month_start - relativedelta(months=1)
-        
-        current_booked = cls.objects.filter(
-            status__in=['BOOKED', 'ON_TRIP'],
-            created_at__gte=current_month_start
-        ).count()
-        
-        last_month_booked = cls.objects.filter(
-            status__in=['BOOKED', 'ON_TRIP'],
-            created_at__gte=last_month_start,
-            created_at__lt=current_month_start
-        ).count()
-        percentage = calculate_percentage_change(last_month_booked, current_booked)
-        
-        return {
-            'count': current_booked,
-            'percentage': round(percentage, 2) 
-        }
 
+        current_booked = cls.objects.filter(
+            status__in=["BOOKED", "ON_TRIP"], created_at__gte=current_month_start
+        ).count()
+
+        last_month_booked = cls.objects.filter(
+            status__in=["BOOKED", "ON_TRIP"],
+            created_at__gte=last_month_start,
+            created_at__lt=current_month_start,
+        ).count()
+
+        return {
+            "count": current_booked,
+            "percentage": calculate_percentage_change(
+                last_month_booked, current_booked
+            ),
+        }
 
     @classmethod
     def get_cancelled_trips_stats(cls):
         today = timezone.now()
         current_month_start = today.replace(day=1)
         last_month_start = current_month_start - relativedelta(months=1)
-        
+
         current_cancelled = cls.objects.filter(
-            status='CANCELLED',
-            created_at__gte=current_month_start
+            status="CANCELLED", created_at__gte=current_month_start
         ).count()
-        
+
         last_month_cancelled = cls.objects.filter(
-            status='CANCELLED',
+            status="CANCELLED",
             created_at__gte=last_month_start,
-            created_at__lt=current_month_start
+            created_at__lt=current_month_start,
         ).count()
-        percentage = calculate_percentage_change(last_month_cancelled, current_cancelled)
-        
+
         return {
-            'count': current_cancelled,
-            'percentage': round(percentage, 2) 
+            "count": current_cancelled,
+            "percentage": calculate_percentage_change(
+                last_month_cancelled, current_cancelled
+            ),
         }
 
+    @classmethod
+    def get_completed_trips_stats(cls):
+        today = timezone.now()
+        current_month_start = today.replace(day=1)
+        last_month_start = current_month_start - relativedelta(months=1)
+
+        current_completed = cls.objects.filter(
+            status="COMPLETED", ride_end_time__gte=current_month_start
+        ).count()
+
+        last_month_completed = cls.objects.filter(
+            status="COMPLETED",
+            ride_end_time__gte=last_month_start,
+            ride_end_time__lt=current_month_start,
+        ).count()
+
+        return {
+            "count": current_completed,
+            "percentage": calculate_percentage_change(
+                last_month_completed, current_completed
+            ),
+        }
 
     @classmethod
     def get_total_earnings_stats(cls):
         today = timezone.now()
         current_month_start = today.replace(day=1)
         last_month_start = current_month_start - relativedelta(months=1)
-        
-        current_earnings = cls.objects.filter(
-            status='COMPLETED',
-            payment_status='paid',
-            ride_end_time__gte=current_month_start
-        ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
-        
-        last_month_earnings = cls.objects.filter(
-            status='COMPLETED', 
-            payment_status='paid',
-            ride_end_time__gte=last_month_start,
-            ride_end_time__lt=current_month_start
-        ).aggregate(models.Sum('total_fare'))['total_fare__sum'] or 0
-        
-        percentage = calculate_percentage_change(last_month_earnings, current_earnings)
-        
+
+        current_earnings = (
+            cls.objects.filter(
+                status="COMPLETED",
+                payment_status="paid",
+                ride_end_time__gte=current_month_start,
+            ).aggregate(models.Sum("total_fare"))["total_fare__sum"]
+            or 0
+        )
+
+        last_month_earnings = (
+            cls.objects.filter(
+                status="COMPLETED",
+                payment_status="paid",
+                ride_end_time__gte=last_month_start,
+                ride_end_time__lt=current_month_start,
+            ).aggregate(models.Sum("total_fare"))["total_fare__sum"]
+            or 0
+        )
+
         return {
-            'amount': current_earnings,
-            'percentage': round(percentage, 2) 
+            "amount": current_earnings,
+            "percentage": calculate_percentage_change(
+                last_month_earnings, current_earnings
+            ),
         }
 
 

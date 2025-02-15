@@ -3,8 +3,11 @@ from datetime import datetime
 
 def calculate_percentage_change(old_value, new_value):
     if old_value == 0:
-        return 100 if new_value > 0 else 0
-    return ((new_value - old_value) / old_value) * 100
+        return "+100" if new_value > 0 else "0"
+
+    total = ((new_value - old_value) / old_value) * 100
+    total = round(total, 2)
+    return f"+{total}" if total > 0 else f"{total}"
 
 
 def parse_datetime(datetime_str):

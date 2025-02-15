@@ -109,13 +109,11 @@ class User(AbstractUser, CloudinaryBaseModelUser):
     date_joined = models.DateTimeField(_("date joined"), default=timezone.localtime(timezone.now()))
     phone = models.CharField(max_length=21, unique=True)
     email = models.EmailField(max_length=254)
-    
+
     code = models.CharField(max_length=74, editable=False, unique=True)
     birth_day = models.DateField(null=True, blank=True)
     gender = models.CharField(choices=(('Male', 'Male'), ('Female', 'Female'),
                               ('Other', 'Other')), max_length=74, null=True, blank=True)
-
-
 
     full_address = models.TextField(null=True, blank=True)
     latitude = models.CharField(max_length=50, null=True, blank=True)
@@ -127,7 +125,7 @@ class User(AbstractUser, CloudinaryBaseModelUser):
     road_or_area = models.CharField(max_length=274, null=True, blank=True)
 
     alternate_number = models.CharField(max_length=74, null=True, blank=True)
-  
+
     photo_upload = CloudinaryField(null=True, blank=True)
     user_doc = models.JSONField(default=None, null=True, blank=True) 
     terms_policy = models.BooleanField(default=False)
@@ -157,56 +155,78 @@ class User(AbstractUser, CloudinaryBaseModelUser):
 
     def hash(self):
         return b32encode(("74-%s-base32secret" % self.phone).encode('utf-8'))
-    
+
     def get_driver_rating(self):
         TripRating = import_module("trips.models").TripRating
         return TripRating.objects.filter(driver=self).aggregate(models.Avg('star'))['star__avg'] or 0.0
 
     @classmethod
     def get_recent_drivers(cls):
-        drivers = cls.objects.filter(
-            type=cls.Types.DRIVER 
-        ).order_by('-date_joined')[:3] 
-        
+        drivers = cls.objects.filter(type=cls.Types.DRIVER).order_by("-date_joined")[:3]
+
         driver_data = []
         for driver in drivers:
             from importlib import import_module
+
             Vehicle = import_module("cabs.models").Vehicle
             vehicle = Vehicle.objects.filter(driver=driver).first()
             driver_info = {
-                'id': driver.id,
-                'name': f"{driver.first_name} {driver.last_name}",
-                'join_date': driver.date_joined.strftime("%d/%m/%Y"),
-                'vehicle_type': vehicle.cab_type.cab_type if vehicle and vehicle.cab_type else None,
-                'status': driver.profile_status,
-                'phone': driver.phone,
-                'vehicle_number': vehicle.number_plate if vehicle else None
+                "id": driver.id,
+                "name": f"{driver.first_name} {driver.last_name}",
+                "join_date": driver.date_joined.strftime("%d/%m/%Y"),
+                "vehicle_type": (
+                    vehicle.cab_type.cab_type if vehicle and vehicle.cab_type else None
+                ),
+                "status": driver.profile_status,
+                "phone": driver.phone,
+                "vehicle_number": vehicle.number_plate if vehicle else None,
             }
             driver_data.append(driver_info)
 
         return driver_data
-        
+
     @classmethod
-    def get_new_users_stats(cls):
+    def get_new_customer_stats(cls):
         today = timezone.now()
         current_month_start = today.replace(day=1)
         last_month_start = current_month_start - relativedelta(months=1)
-        
+
         current_users = cls.objects.filter(
-            date_joined__gte=current_month_start
+            date_joined__gte=current_month_start, type=cls.Types.CUSTOMER
         ).count()
-        
+
         last_month_users = cls.objects.filter(
             date_joined__gte=last_month_start,
-            date_joined__lt=current_month_start
+            date_joined__lt=current_month_start,
+            type=cls.Types.CUSTOMER,
         ).count()
-        
-        percentage = calculate_percentage_change(last_month_users, current_users)
-        
+
         return {
-            'count': current_users,
-            'percentage': round(percentage, 2) 
+            "count": current_users,
+            "percentage": calculate_percentage_change(last_month_users, current_users),
         }
+
+    @classmethod
+    def get_new_driver_stats(cls):
+        today = timezone.now()
+        current_month_start = today.replace(day=1)
+        last_month_start = current_month_start - relativedelta(months=1)
+
+        current_drivers = cls.objects.filter(
+            date_joined__gte=current_month_start, type=cls.Types.DRIVER
+        ).count()
+        last_month_drivers = cls.objects.filter(
+            date_joined__gte=last_month_start,
+            date_joined__lt=current_month_start,
+            type=cls.Types.DRIVER,
+        ).count()
+        return {
+            "count": current_drivers,
+            "percentage": calculate_percentage_change(
+                last_month_drivers, current_drivers
+            ),
+        }
+
 
 class Admin(User):
     objects = AdminManager()
@@ -232,9 +252,6 @@ class Driver(User):
         if not self.code:
             self.code = create_ref_code()
         return super().save(*args, **kwargs)
-      
-       
-      
 
 
 class Customer(User):
@@ -250,7 +267,6 @@ class Customer(User):
         return super().save(*args, **kwargs)
 
 
-    
 class DriverPhoneVerify(models.Model):
     user = models.OneToOneField(Driver, on_delete=models.CASCADE)
     count = models.PositiveIntegerField(default=1, null=True, blank=True)
@@ -271,9 +287,6 @@ class CustomerPhoneVerify(models.Model):
 #     if sender.__name__ in ['Customer', 'Driver', 'CarOwner' ] and \
 #          not instance.email and not instance.pk:
 #             instance.email = instance.code.lower() + "@jps.myride.com"
-
-
-
 
 
 def user_directory_path(instance, filename):
@@ -334,7 +347,6 @@ class CurrentLocation(models.Model):
 
     def __str__(self):
         return f"{self.user.phone} - {self.current_latitude}, {self.current_longitude} at {self.timestamp}"
-    
 
 
 @receiver(post_save, sender=Customer)
@@ -347,7 +359,6 @@ def print_only_after_deal_created(sender, instance, created, **kwargs):
 def print_only_after_deal_created(sender, instance, created, **kwargs):
     if created:
         DriverPhoneVerify.objects.create(user=instance)
-
 
 
 # @receiver(post_save, sender=User)

@@ -23,6 +23,8 @@ import json
 from utility.rating import get_driver_rating
 import logging
 import pytz
+
+from utility.util import parse_datetime
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -93,7 +95,7 @@ class BookingRequestView(APIView):
         # Notify drivers asynchronously
         if scheduled_datetime:
             # Notify driver 15 minutes before scheduled time
-            scheduled_datetime = datetime.strptime(scheduled_datetime, '%Y-%m-%dT%H:%M:%S.%fZ')
+            scheduled_datetime = parse_datetime(scheduled_datetime)
             scheduled_datetime = pytz.utc.localize(scheduled_datetime)
             notification_time = scheduled_datetime - timedelta(minutes=15)
             schedule_driver_notifications.apply_async(

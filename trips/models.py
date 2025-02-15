@@ -21,6 +21,7 @@ class Trip(BaseModel):
                     ('BOOKED', 'BOOKED'), ('CANCELLED', 'CANCELLED'),
                    ('ON_TRIP', 'ON_TRIP'), ('COMPLETED', 'COMPLETED'))
 
+    # trip_id = models.CharField(max_length=500, null=True, blank=True)
     customer = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name='cutomer_trips')
     driver = models.ForeignKey(
@@ -168,12 +169,12 @@ class Trip(BaseModel):
         last_month_start = current_month_start - relativedelta(months=1)
         
         current_booked = cls.objects.filter(
-            status__in=['REQUESTED', 'BOOKED', 'ON_TRIP', 'COMPLETED'],
+            status__in=['BOOKED', 'ON_TRIP'],
             created_at__gte=current_month_start
         ).count()
         
         last_month_booked = cls.objects.filter(
-            status__in=['REQUESTED', 'BOOKED', 'ON_TRIP', 'COMPLETED'],
+            status__in=['BOOKED', 'ON_TRIP'],
             created_at__gte=last_month_start,
             created_at__lt=current_month_start
         ).count()

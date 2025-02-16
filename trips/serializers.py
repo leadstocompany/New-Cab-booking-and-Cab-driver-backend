@@ -15,7 +15,7 @@ class TripSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trip
         # fields = '__all__'
-        fields = ['id','customer','driver', 'cab','status','source','destination', 'distance', 'time', 'ride_type','otp_count', 'rent_price', 'scheduled_datetime', 'canceled_by', 'cancel_reason', 'otp', 'payment_type', 'waiting_time', 'waiting_charge', 'total_fare', 'payment_status',  'pickup_latitude','pickup_longitude','dropup_latitude','dropup_longitude', 'created_at']
+        fields = ['id','trip_id','customer','driver', 'cab','status','source','destination', 'distance', 'time', 'ride_type','otp_count', 'rent_price', 'scheduled_datetime', 'canceled_by', 'cancel_reason', 'otp', 'payment_type', 'waiting_time', 'waiting_charge', 'total_fare', 'payment_status',  'pickup_latitude','pickup_longitude','dropup_latitude','dropup_longitude', 'created_at']
     def to_representation(self, instance):
         self.fields['customer'] =  CustomerProfileSerializer(read_only=True)
         self.fields['driver'] =  DriverProfileSerializer(read_only=True)

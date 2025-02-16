@@ -32,16 +32,16 @@ class FileUploadAPI(views.APIView):
     serializer_class = FileUploadSerializer
 
     def post(self, request, format=None, *args, **kwargs):
+        file_obj = request.FILES["file"]  # Get file directly from FILES
+
         serializer = self.serializer_class(
-            data={'file': request.data['file'], 'phone': request.user.phone},
-            context={'request': request})
+            data={"file": file_obj, "phone": request.user.phone},
+            context={"request": request},
+        )
+
         if serializer.is_valid(raise_exception=True):
             instance = serializer.save()
-           
-            url = f'{settings.SERVER_URL}{instance.file.url}'
-            print("url")
-
-            return Response({"url": url}, status=status.HTTP_200_OK)
+            return Response({"url": instance.file}, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -254,7 +254,7 @@ class ActiveVehicleCertificateFieldList(generics.ListAPIView):
 
     def get_queryset(self):
         return VehicleCertificateField.objects.filter(active=True)
-    
+
 class ActiveVehiclePhotoPageList(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = VehiclePhotoPageSerializer
@@ -323,7 +323,6 @@ class DriverBankAccountAPIView(APIView):
         except BankAccount.DoesNotExist as e:
             logger.error(f"Error occurred: {e}")
             return Response({"error": "Bank account not found for this driver."}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 class UpdateDriverBankAccountAPIView(APIView):

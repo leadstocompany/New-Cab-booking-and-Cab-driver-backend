@@ -47,8 +47,14 @@ def get_nearest_driver_list(trip_id, latitude, longitude):
                         location = driver.currentlocation
                         distance = haversine(float(latitude), float(longitude), float(location.current_latitude), float(location.current_longitude))
                         if distance <= max_distance:
-                            nearby_drivers.append(driver)
-                    
+                            # Check if the driver has any unpaid completed trips
+                            has_unpaid_trips = Trip.objects.filter(
+                                driver=driver,
+                                status='COMPLETED',
+                                payment_status__isnull=True  # Unpaid trips have empty payment_status
+                            ).exists()
+                            if not has_unpaid_trips:
+                                nearby_drivers.append(driver)              
             except CurrentLocation.DoesNotExist as e:
                 logger.error(f"Error occurred: {e}")
                 continue

@@ -371,7 +371,6 @@ class UpdateDriverBankAccountAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 # class CurrentUserLocationView(APIView):
 #     permission_classes = [permissions.IsAuthenticated]
 
@@ -488,58 +487,66 @@ class DriverAnalyticsView(APIView):
 
     def get(self, request):
         driver = request.user
-        month = request.query_params.get('month')
-        
-        # Base query for completed trips
+        month = request.query_params.get("month")
+        year = request.query_params.get("year")
+
+        if not month or not year:
+            return Response(
+                {"error": "Both month and year parameters are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         base_query = Trip.objects.filter(
-            driver=driver,
-            status='COMPLETED',
-            payment_status='paid'
+            driver=driver, status="COMPLETED", payment_status="paid"
         )
 
-        if month:
-            # Filter for specific month
-            base_query = base_query.filter(
-                ride_end_time__month=month,
-                ride_end_time__year=timezone.now().year
-            )
-        else:
-            # Get last 6 months data
-            six_months_ago = timezone.now() - relativedelta(months=6)
-            base_query = base_query.filter(ride_end_time__gte=six_months_ago)
+        # current month data
+        current_month_data = base_query.filter(
+            ride_start_time__month=month, ride_start_time__year=year
+        )
+
+        # previous month data
+        previous_month = 12 if int(month) == 1 else int(month) - 1
+        previous_year = int(year) - 1 if int(month) == 1 else int(year)
+        previous_month_data = base_query.filter(
+            ride_start_time__month=previous_month, ride_start_time__year=previous_year
+        )
 
         # Calculate metrics
-        total_rides = base_query.count()
-        total_income = base_query.aggregate(Sum('total_fare'))['total_fare__sum'] or 0
-        total_distance = base_query.aggregate(Sum('distance'))['distance__sum'] or 0
+        current_rides = current_month_data.count()
+        current_income = (
+            current_month_data.aggregate(Sum("total_fare"))["total_fare__sum"] or 0
+        )
+        current_distance = (
+            current_month_data.aggregate(Sum("distance"))["distance__sum"] or 0
+        )
 
-        # Get month-wise breakdown
-        monthly_data = []
-        for i in range(6):
-            month_date = timezone.now() - relativedelta(months=i)
-            month_stats = base_query.filter(
-                ride_end_time__month=month_date.month,
-                ride_end_time__year=month_date.year
-            ).aggregate(
-                rides=Count('id'),
-                income=Sum('total_fare'),
-                distance=Sum('distance')
-            )
-            
-            monthly_data.append({
-                'month_name': month_date.strftime('%B %Y'),
-                'month': month_date.month,
-                'year': month_date.year,
-                'rides': month_stats['rides'] or 0,
-                'income': month_stats['income'] or 0,
-                'distance': month_stats['distance'] or 0
-            })
-
-        response_data = {
-            'total_rides': total_rides,
-            'total_income': total_income,
-            'total_distance': total_distance,
-            'monthly_breakdown': monthly_data
-        }
-
-        return Response(response_data)
+        previous_rides = previous_month_data.count()
+        previous_income = (
+            previous_month_data.aggregate(Sum("total_fare"))["total_fare__sum"] or 0
+        )
+        previous_distance = (
+            previous_month_data.aggregate(Sum("distance"))["distance__sum"] or 0
+        )
+        return Response(
+            {
+                "total_income": {
+                    "amount": current_income,
+                    "percentage": calculate_percentage_change(
+                        previous_income, current_income
+                    ),
+                },
+                "total_rides": {
+                    "amount": current_rides,
+                    "percentage": calculate_percentage_change(
+                        previous_rides, current_rides
+                    ),
+                },
+                "total_distance": {
+                    "amount": current_distance,
+                    "percentage": calculate_percentage_change(
+                        previous_distance, current_distance
+                    ),
+                },
+            }
+        )

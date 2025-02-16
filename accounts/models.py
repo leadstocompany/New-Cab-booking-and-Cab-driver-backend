@@ -118,11 +118,14 @@ class User(AbstractUser, CloudinaryBaseModelUser):
     full_address = models.TextField(null=True, blank=True)
     latitude = models.CharField(max_length=50, null=True, blank=True)
     longitude = models.CharField(max_length=50, null=True, blank=True)
-    pincode = models.PositiveIntegerField(null=True, blank=True)
+    country = models.CharField(max_length=74, null=True, blank=True)
     state = models.CharField(max_length=74, null=True, blank=True)
     city = models.CharField(max_length=74, null=True, blank=True)
+    pincode = models.PositiveIntegerField(null=True, blank=True)
+    address = models.CharField(max_length=274, null=True, blank=True)
     house_or_building = models.CharField(max_length=274, null=True, blank=True)
     road_or_area = models.CharField(max_length=274, null=True, blank=True)
+    landmark = models.CharField(max_length=274, null=True, blank=True)
 
     alternate_number = models.CharField(max_length=74, null=True, blank=True)
 

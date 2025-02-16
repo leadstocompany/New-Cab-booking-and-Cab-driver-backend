@@ -51,7 +51,6 @@ class CloudinaryBaseModelUser(models.Model):
                 folder_path = self.get_cloudinary_folder(
                     field_name
                 )  # Get dynamic folder
-
                 # Upload the file manually to Cloudinary
                 upload_result = cloudinary.uploader.upload(
                     file_instance,
@@ -60,7 +59,8 @@ class CloudinaryBaseModelUser(models.Model):
                     use_filename=True,
                     unique_filename=True,
                 )
-                setattr(self, field_name, upload_result["public_id"])
+                print(upload_result)
+                setattr(self, field_name, upload_result["secure_url"])
 
         super().save(*args, **kwargs)
 
@@ -71,23 +71,6 @@ class CloudinaryBaseModelUser(models.Model):
             if file_instance:
                 cloudinary.uploader.destroy(file_instance)
         super().delete(*args, **kwargs)
-
-    def get_cloudinary_url(self, field_name):
-        file_path = object.__getattribute__(self, field_name)
-        if file_path:
-            if isinstance(file_path, str):  # For API responses
-                return f"https://res.cloudinary.com/{settings.CLOUDINARY_STORAGE_NAME}/image/upload/{file_path}"
-            return file_path  # For admin panel, return CloudinaryField object
-        return None
-
-    def __getattribute__(self, name):
-        # Use object.__getattribute__ to get file_fields
-        get_file_fields = object.__getattribute__(self, "get_file_fields")
-        if name in get_file_fields():
-            # Use object.__getattribute__ to get the cloudinary_url method
-            get_url = object.__getattribute__(self, "get_cloudinary_url")
-            return get_url(name)
-        return super().__getattribute__(name)
 
 
 class CloudinaryBaseModel(BaseModel, CloudinaryBaseModelUser):

@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 
 
 def calculate_percentage_change(old_value, new_value):
@@ -23,3 +24,7 @@ def parse_datetime(datetime_str):
             continue
 
     raise ValueError(f"time data '{datetime_str}' does not match any supported formats")
+
+
+def generate_six_digit_uuid():
+    return str(uuid.uuid4())[:7]

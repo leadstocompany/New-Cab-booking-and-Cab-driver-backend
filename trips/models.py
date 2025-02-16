@@ -10,7 +10,7 @@ from django.dispatch import receiver
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
-from utility.util import calculate_percentage_change
+from utility.util import calculate_percentage_change, generate_six_digit_uuid
 
 # from trips.tasks import send_trip_notification
 # Create your models here.
@@ -21,7 +21,7 @@ class Trip(BaseModel):
                     ('BOOKED', 'BOOKED'), ('CANCELLED', 'CANCELLED'),
                    ('ON_TRIP', 'ON_TRIP'), ('COMPLETED', 'COMPLETED'))
 
-    # trip_id = models.CharField(max_length=500, null=True, blank=True)
+    trip_id = models.CharField(max_length=500, null=True, blank=True, default=generate_six_digit_uuid)
     customer = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name='cutomer_trips')
     driver = models.ForeignKey(
@@ -62,7 +62,7 @@ class Trip(BaseModel):
     ride_end_time=models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return self.source
+        return str(self.source)
 
     @classmethod
     def get_weekly_income_stats(cls):

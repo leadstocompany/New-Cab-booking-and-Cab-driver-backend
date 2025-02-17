@@ -2,6 +2,8 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
+from utility.pagination import CustomPagination
 from .models import DriverSupport, CustomerSupport
 from .serializers import DriverSupportSerializer, CustomerSupportSerializer
 from utility.permissions import IsAdminOrSuperuser
@@ -54,6 +56,8 @@ class AllDriverSupportListView(generics.ListAPIView):
     queryset = DriverSupport.objects.all().order_by('-created_at')
     serializer_class = DriverSupportSerializer
     permission_classes = [IsAdminOrSuperuser]
+    pagination_class = CustomPagination  
+
 
 
 

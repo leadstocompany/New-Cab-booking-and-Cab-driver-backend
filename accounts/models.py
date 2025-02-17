@@ -129,7 +129,7 @@ class User(AbstractUser, CloudinaryBaseModelUser):
 
     alternate_number = models.CharField(max_length=74, null=True, blank=True)
 
-    photo_upload = CloudinaryField(null=True, blank=True)
+    photo_upload = models.CharField(null=True, blank=True)
     user_doc = models.JSONField(default=None, null=True, blank=True) 
     terms_policy = models.BooleanField(default=False)
     myride_insurance = models.BooleanField(default=False)
@@ -298,7 +298,7 @@ def user_directory_path(instance, filename):
 
 
 class FileUpload(CloudinaryBaseModel):
-    file = CloudinaryField(null=True, blank=True)
+    file = models.CharField(null=True, blank=True)
     phone = models.CharField(max_length=74)
 
     def get_cloudinary_folder(self, field_name):

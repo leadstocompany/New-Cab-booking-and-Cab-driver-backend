@@ -368,7 +368,7 @@ class DriverDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Driver
         fields = ('id','first_name', 'last_name', 'phone', 'email', 'full_address', 'pincode',
-                    'state', 'city', 'house_or_building', 'road_or_area', 'alternate_number','user_doc',
+                    'country','state', 'city', 'house_or_building', 'road_or_area', 'landmark','alternate_number','user_doc',
                     'photo_upload', 'terms_policy', 'myride_insurance', 'latitude', 'longitude', 'date_joined','driver_duty', "profile_status",'vehicle', 'ride_history', 'wallet',
                     'bank_account', 'subscription_details', 'active_rides_details', 'trip_rating_feedback', 'rating')
    

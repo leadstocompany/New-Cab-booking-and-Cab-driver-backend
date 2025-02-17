@@ -7,6 +7,8 @@ from .models import Coupon, CouponUsage
 from .serializers import CouponSerializer, ActiveCouponSerializer, CouponUsageSerializer
 from utility.permissions import IsAdminOrSuperuser
 from rest_framework.views import APIView
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 import logging
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -44,6 +46,13 @@ class ActiveCouponDetailView(generics.RetrieveAPIView):
         except Coupon.DoesNotExist as e:
             logger.error(f"Error occurred: {e}")
             return Response({'detail': 'Coupon not found'}, status=status.HTTP_404_NOT_FOUND)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CouponDestroyView(generics.DestroyAPIView):
+    queryset = Coupon.objects.all()
+    serializer_class = CouponSerializer
+    permission_classes = [IsAdminOrSuperuser]
+    lookup_field = 'code'
 
 class ApplyCouponAPI(APIView):
     permission_classes = [permissions.IsAuthenticated]

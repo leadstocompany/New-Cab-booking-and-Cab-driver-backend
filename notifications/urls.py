@@ -14,12 +14,17 @@ urlpatterns = [
         name="create_notifications",
     ),
     path(
+        "admin/<int:pk>/details",
+        views.DriverNotificationDetailView.as_view(),
+        name="detail_notifications",
+    ),
+    path(
         "admin/<int:pk>/",
         views.DriverNotificationUpdateView.as_view(),
         name="update_notifications",
     ),
     path(
-        "admin/<int:pk>/",
+        "admin/delete/<int:pk>/",
         views.DriverNotificationDeleteView.as_view(),
         name="delete_notifications",
     ),

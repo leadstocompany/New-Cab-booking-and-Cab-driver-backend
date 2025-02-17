@@ -64,7 +64,7 @@ def get_nearest_driver_list(trip_id, latitude, longitude):
         logger.error(f"Error occurred: {e}")
 
 
-def get_all_available_drivers():
+def get_all_available_drivers(return_object=False):
     """Get list of all available drivers"""
     try:
         # Get drivers who are on duty and not on active trips
@@ -77,6 +77,8 @@ def get_all_available_drivers():
         ).distinct()
 
         logger.debug("Retrieved all available drivers list")
+        if return_object:
+            return available_drivers
         # return available_drivers
         drivers_ = []
         for driver in available_drivers:

@@ -1,7 +1,7 @@
 from cloudinary.models import CloudinaryField
 from django.db import models
 
-from utility.model import CloudinaryBaseModel
+from utility.model import CloudinaryBaseModel, BaseModel
 
 
 class DriverNotification(CloudinaryBaseModel):

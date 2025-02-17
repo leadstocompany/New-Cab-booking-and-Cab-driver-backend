@@ -5,7 +5,7 @@ from utility.model import CloudinaryBaseModel
 
 
 class DriverNotification(CloudinaryBaseModel):
-    banner = CloudinaryField(null=True, blank=True)
+    banner = models.CharField(null=True, blank=True)
     title = models.CharField(max_length=255)
     message = models.TextField()
     url = models.URLField(null=True, blank=True)

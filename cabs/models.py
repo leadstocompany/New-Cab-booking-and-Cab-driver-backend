@@ -7,7 +7,7 @@ from cloudinary.models import CloudinaryField
 class CabType(CloudinaryBaseModel):
     cab_type = models.CharField(max_length=74, unique=True)
     # icon = models.TextField(null=True, blank=True)
-    icon = CloudinaryField(null=True, blank=True)
+    icon = models.CharField(null=True, blank=True)
 
     def __str__(self):
         return str(self.cab_type)
@@ -22,7 +22,7 @@ class CabType(CloudinaryBaseModel):
 class CabClass(CloudinaryBaseModel):
     cab_class = models.CharField(max_length=200, unique=True)
     cab_type = models.ForeignKey(CabType, on_delete=models.PROTECT)
-    icon = CloudinaryField(null=True, blank=True)
+    icon = models.CharField(null=True, blank=True)
     # icon = models.FileField(upload_to=vehicle_class_directory_path, null=True, blank=True)
     def __str__(self):
         return str(self.cab_class)
@@ -36,7 +36,7 @@ class CabClass(CloudinaryBaseModel):
 class VehicleMaker(BaseModel):
     maker = models.CharField(max_length=200, unique=True)
     cab_type = models.ForeignKey(CabType, on_delete=models.PROTECT, null=True, blank=True)
-    icon = CloudinaryField(null=True, blank=True)
+    icon = models.CharField(null=True, blank=True)
     # icon = models.FileField(upload_to=vehicle_maker_directory_path, null=True, blank=True)
     def __str__(self):
         return self.maker
@@ -53,7 +53,7 @@ class VehicleModel(BaseModel):
     cabtype=models.ForeignKey(CabType, on_delete=models.PROTECT, null=True, blank=True)
     cabclass=models.ForeignKey(CabClass, on_delete=models.PROTECT, null=True, blank=True)
     maker = models.ForeignKey(VehicleMaker, on_delete=models.PROTECT)
-    model_image = CloudinaryField(null=True, blank=True)
+    model_image = models.CharField(null=True, blank=True)
     # model_image=models.FileField(upload_to=vehicle_model_directory_path, null=True, blank=True)
     
     # Add image 

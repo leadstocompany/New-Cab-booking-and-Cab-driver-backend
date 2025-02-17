@@ -118,15 +118,18 @@ class User(AbstractUser, CloudinaryBaseModelUser):
     full_address = models.TextField(null=True, blank=True)
     latitude = models.CharField(max_length=50, null=True, blank=True)
     longitude = models.CharField(max_length=50, null=True, blank=True)
-    pincode = models.PositiveIntegerField(null=True, blank=True)
+    country = models.CharField(max_length=74, null=True, blank=True)
     state = models.CharField(max_length=74, null=True, blank=True)
     city = models.CharField(max_length=74, null=True, blank=True)
+    pincode = models.PositiveIntegerField(null=True, blank=True)
+    address = models.CharField(max_length=274, null=True, blank=True)
     house_or_building = models.CharField(max_length=274, null=True, blank=True)
     road_or_area = models.CharField(max_length=274, null=True, blank=True)
+    landmark = models.CharField(max_length=274, null=True, blank=True)
 
     alternate_number = models.CharField(max_length=74, null=True, blank=True)
 
-    photo_upload = CloudinaryField(null=True, blank=True)
+    photo_upload = models.CharField(null=True, blank=True)
     user_doc = models.JSONField(default=None, null=True, blank=True) 
     terms_policy = models.BooleanField(default=False)
     myride_insurance = models.BooleanField(default=False)
@@ -295,7 +298,7 @@ def user_directory_path(instance, filename):
 
 
 class FileUpload(CloudinaryBaseModel):
-    file = CloudinaryField(null=True, blank=True)
+    file = models.CharField(null=True, blank=True)
     phone = models.CharField(max_length=74)
 
     def get_cloudinary_folder(self, field_name):

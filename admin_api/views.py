@@ -391,14 +391,64 @@ class SuspendedDriverListAPIView(generics.ListAPIView):
         return User.objects.filter(type=User.Types.DRIVER, profile_status='Block').order_by("-date_joined")
 
 
-class DriverUpdateView(mixins.UpdateModelMixin,
-                       generics.GenericAPIView):
+class DriverUpdateView(mixins.UpdateModelMixin, generics.GenericAPIView):
     queryset = Driver.objects.all()
     serializer_class = DriverProfileSerializer
     permission_classes = [IsAdminOrSuperuser]  
     lookup_field = 'id'
+
     def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+        driver = self.get_object()
+        
+        # Update Driver model fields
+        driver_fields = [
+            'first_name', 'last_name', 'pincode', 
+            'email', 'phone', 'user_doc', 'profile_status', 'country', 'state', 'city', 'house_or_building', 'road_or_area', 'landmark', 'myride_insurance'
+        ]
+        
+        for field in driver_fields:
+            if field in request.data:
+                setattr(driver, field, request.data[field])
+        
+        driver.save()
+        
+        # Update Vehicle model fields
+        try:
+            vehicle = Vehicle.objects.get(driver=driver)
+        except Vehicle.DoesNotExist:
+            vehicle = Vehicle(driver=driver)
+            
+        if 'vehicle_images' in request.data:
+            vehicle.vehicle_photo = request.data['vehicle_images']
+        if 'vehicle_documents' in request.data:
+            vehicle.vehicle_certiifcate = request.data['vehicle_documents']
+            
+        # Update vehicle details
+        if 'vehicle' in request.data:
+            vehicle_data = request.data['vehicle']
+            vehicle.number_plate = vehicle_data.get('number_plate', vehicle.number_plate)
+            vehicle.cab_type_id = vehicle_data.get('cab_type', vehicle.cab_type_id)
+            vehicle.maker_id = vehicle_data.get('maker', vehicle.maker_id)
+            vehicle.model_id = vehicle_data.get('model', vehicle.model_id)
+        
+        vehicle.save()
+        
+        # Update or Create Bank Account
+        if 'bank_account' in request.data:
+            bank_data = request.data['bank_account']
+            bank_account, created = BankAccount.objects.update_or_create(
+                driver=driver,
+                defaults={
+                    'name': bank_data['name'],
+                    'account_number': bank_data['account_number'],
+                    'swift_code': bank_data['swift_code'],
+                    'bank_name': bank_data['bank_name']
+                }
+            )
+        
+        return Response({
+            "message": "Driver, vehicle and bank details updated successfully"
+        }, status=status.HTTP_200_OK)
 
    
 class DriverDeleteView(generics.DestroyAPIView):

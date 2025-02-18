@@ -47,6 +47,10 @@ class CloudinaryBaseModelUser(models.Model):
 
         for field_name in self.get_file_fields():
             file_instance = getattr(self, field_name, None)
+
+            if isinstance(file_instance, str):
+                continue
+
             if file_instance:
                 folder_path = self.get_cloudinary_folder(
                     field_name

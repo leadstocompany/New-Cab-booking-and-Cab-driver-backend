@@ -7,7 +7,7 @@ from accounts.models import User, Driver, Customer, DriverPhoneVerify, CustomerP
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
-from .models import User, BankAccount  # Make sure to import your custom User model
+from .models import FileUpload, User, BankAccount  # Make sure to import your custom User model
 class UserAdmin(BaseUserAdmin):
     # The fields to be used in displaying the User model.
     # These override the definitions on the base UserAdmin
@@ -68,4 +68,6 @@ admin.site.register(Admin)
 # admin.site.register(Customer)
 admin.site.register(DriverPhoneVerify)
 admin.site.register(CustomerPhoneVerify)
+admin.site.register(FileUpload)
+
 

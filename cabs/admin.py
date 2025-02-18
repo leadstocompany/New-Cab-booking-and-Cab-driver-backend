@@ -7,6 +7,7 @@ admin.site.register(VehicleMaker)
 # admin.site.register(VehicleModel)
 admin.site.register(CabType)
 admin.site.register(CabClass)
+admin.site.register(CabBookingPrice)
 
 
 @admin.register(Vehicle)

@@ -127,9 +127,10 @@ class CabClassWithPriceList(APIView):
 
 class NearestDriversView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
-    def get(self, request,cab_class_id, latitude, longitude, max_distance=15, *args, **kwargs):
+    def get(self, request, latitude, longitude, max_distance=15, *args, **kwargs):
         max_distance = float(max_distance)
         radius = 6371  # Earth's radius in kilometers
+        cab_class_id = request.query_params.get('cab_class_id', None)
 
         def haversine(lat1, lon1, lat2, lon2):
             lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])

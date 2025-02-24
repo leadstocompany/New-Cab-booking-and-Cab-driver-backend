@@ -25,6 +25,7 @@ import logging
 import pytz
 
 from utility.util import parse_datetime
+from wallets.models import Wallet
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -73,6 +74,10 @@ class BookingRequestView(APIView):
         payment_type= request.data.get('payment_type')
         distance=request.data.get('distance')
         otp = str(random.randint(1000, 9999))
+
+        wallet_data = Wallet.objects.get(user=customer)
+        if wallet_data.balance < trip_rent_price:
+            return Response({"detail": "Insufficient balance. Atleast "+str(trip_rent_price)+" required"}, status=status.HTTP_400_BAD_REQUEST)
         
         # Create trip request
         trip = Trip.objects.create(

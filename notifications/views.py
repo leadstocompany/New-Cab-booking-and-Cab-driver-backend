@@ -10,7 +10,7 @@ from trips.fcm_notified_task import send_fcm_notification
 from utility.nearest_driver_list import get_all_available_drivers
 from utility.permissions import IsAdminOrSuperuser
 from utility.pagination import CustomPagination
-from rest_framework import parsers
+from rest_framework import parsers, permissions
 
 
 from rest_framework import generics, status, parsers
@@ -74,3 +74,8 @@ class DriverNotificationDeleteView(generics.DestroyAPIView):
     permission_classes = [IsAdminOrSuperuser]
     queryset = DriverNotification.objects.all()
     lookup_field = "pk"
+
+class AllDriverNotificationView(generics.ListAPIView):
+    serializer_class = DriverNotificationSerializer
+    parser_classes = [permissions.IsAuthenticated]
+    queryset = DriverNotification.objects.all()

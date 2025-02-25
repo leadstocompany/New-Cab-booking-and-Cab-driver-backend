@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ActiveSOSRequestCountView, SOSHelpRequestCreateView, SOSHelpRequestListView, SOSHelpRequestDetailView, SOSMessageCreateView, SOSMessageListView, SOSMessageUpdateView, SOSMessageDeleteView, ActivateSOSHelpRequestList, CompletedSOSHelpRequestList, SOSHelpRequestDetail, ResolveSOSRequestView
+from .views import ActiveSOSRequestCountView, SOSHelpRequestCreateView, SOSHelpRequestListView, SOSHelpRequestDetailView, SOSMessageCreateView, SOSMessageListView, SOSMessageUpdateView, SOSMessageDeleteView, ActivateSOSHelpRequestList, CompletedSOSHelpRequestList, SOSHelpRequestDetail, ResolveSOSRequestView, AllSOSMessageList, SOSMessageDetailView
 
 urlpatterns = [
     path('sos/', SOSHelpRequestCreateView.as_view(), name='sos-request'),
@@ -7,10 +7,12 @@ urlpatterns = [
     path('admin/sos-help-request/<int:pk>/', SOSHelpRequestDetailView.as_view(), name='sos-help-request-detail'),
 
     # sos message templates
-    path('message/', SOSMessageCreateView.as_view(), name='sos-message'),
+    path('message/create/', SOSMessageCreateView.as_view(), name='sos-message'),
     path('message/list/', SOSMessageListView.as_view(), name='sos-message-list'),
     path('message/update/<int:pk>/', SOSMessageUpdateView.as_view(), name='sos-message-update'),
+    path('message/<int:pk>/detail/', SOSMessageDetailView.as_view(), name='sos-message-update'),
     path('message/delete/<int:pk>/', SOSMessageDeleteView.as_view(), name='sos-message-delete'),
+    path('message/all/', AllSOSMessageList.as_view(), name='all-sos-message'),
 
     # sos admin
     path('admin/active/', ActivateSOSHelpRequestList.as_view(), name='sos-help-request-list'),

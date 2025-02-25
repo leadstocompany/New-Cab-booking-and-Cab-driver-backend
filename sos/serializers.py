@@ -17,8 +17,11 @@ class SOSHelpRequestSerializer(serializers.ModelSerializer):
 class SOSMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = SOSMessage
-        fields = ["message"]
+        fields = ['id',"message"]
 
+class AllSOSMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SOSMessage      
 
 class SOSHelpRequestListSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='user.full_name')

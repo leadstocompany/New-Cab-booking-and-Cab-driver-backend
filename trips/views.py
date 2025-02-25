@@ -75,9 +75,11 @@ class BookingRequestView(APIView):
         distance=request.data.get('distance')
         otp = str(random.randint(1000, 9999))
 
-        wallet_data = Wallet.objects.get(user=customer)
-        if wallet_data.balance < trip_rent_price:
-            return Response({"detail": "Insufficient balance. Atleast "+str(trip_rent_price)+" required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if payment_type.lower() == 'wallet':
+            wallet_data = Wallet.objects.get(user=customer)
+            if wallet_data.balance < trip_rent_price:
+                return Response({"detail": "Insufficient balance. Atleast "+str(trip_rent_price)+" required"}, status=status.HTTP_400_BAD_REQUEST)
         
         # Create trip request
         trip = Trip.objects.create(

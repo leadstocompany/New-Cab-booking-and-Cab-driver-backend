@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from utility.pagination import CustomPagination
 from .models import SOSHelpRequest, SOSMessage
 from .serializers import (
+    AllSOSMessageSerializer,
     SOSHelpRequestDetailSerializer,
     SOSHelpRequestSerializer,
     SOSMessageSerializer,
@@ -69,12 +70,34 @@ class SOSMessageListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = CustomPagination
 
+class AllSOSMessageList(generics.ListAPIView):
+    queryset = SOSMessage.objects.all()
+    serializer_class = SOSMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 class SOSMessageUpdateView(generics.UpdateAPIView):
     queryset = SOSMessage.objects.all()
     serializer_class = SOSMessageSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "pk"
+
+class SOSMessageDetailView(generics.RetrieveAPIView):
+    queryset = SOSMessage.objects.all()
+    serializer_class = SOSMessageSerializer
+    permission_classes = [IsAdminOrSuperuser]
+    lookup_field = "pk"
+
+    def get(self, request, *args, **kwargs):
+        try:
+            sos_help_request = SOSMessage.objects.get(pk=kwargs["pk"])
+            serializer = self.get_serializer(sos_help_request)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except SOSMessage.DoesNotExist as e:
+            logger.error(f"Error occurred: {e}")
+            return Response(
+                {"error": "SOSMessage entry not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class SOSMessageDeleteView(generics.DestroyAPIView):

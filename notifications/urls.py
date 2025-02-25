@@ -28,4 +28,5 @@ urlpatterns = [
         views.DriverNotificationDeleteView.as_view(),
         name="delete_notifications",
     ),
+    path("all/", views.AllDriverNotificationView.as_view())
 ]

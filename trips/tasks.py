@@ -87,7 +87,7 @@ def booking_request_notify_drivers(trip_id,driver_ids, scheduled_datetime):
         for driver in drivers:
             cab_custom_price = None
             cab_class_custom = None
-            if trip.ride_type is None or trip.total_fare is None:
+            if trip.ride_type is None or (trip.rent_price is None or trip.rent_price <= 0):
                 vehicle = Vehicle.objects.get(driver_id=driver.id)
                 cabclass_value = CabBookingPrice.objects.get(cab_class=vehicle.cab_class)
                 cab_custom_price = cabclass_value.base_fare * trip.distance

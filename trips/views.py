@@ -98,13 +98,28 @@ class BookingRequestView(APIView):
             payment_type=payment_type,
             distance=distance
         )
+        print("trip")
+        print(trip.created_at)
+        logger.error("trip")
+        logger.error(trip.created_at)
+
 
         # Notify drivers asynchronously
         if scheduled_datetime:
             # Notify driver 15 minutes before scheduled time
-            scheduled_datetime = parse_datetime(scheduled_datetime)
-            scheduled_datetime = pytz.utc.localize(scheduled_datetime)
+            indonesian_timezone = pytz.timezone(settings.TIME_ZONE)
+
+            if isinstance(scheduled_datetime, str):  # Ensure it's not already a datetime object
+                scheduled_datetime = parse_datetime(scheduled_datetime)
+
+            # Step 2: Localize only if it's naive (without timezone)
+            if scheduled_datetime.tzinfo is None:
+                scheduled_datetime = indonesian_timezone.localize(scheduled_datetime)
+
+            # Step 3: Convert to UTC
+            scheduled_datetime = scheduled_datetime.astimezone(pytz.utc)
             notification_time = scheduled_datetime - timedelta(minutes=15)
+            print(notification_time)
             schedule_driver_notifications.apply_async(
                 args=[trip.id, pickup_latitude, pickup_longitude, scheduled_datetime],
                 eta=notification_time
@@ -130,7 +145,7 @@ class AcceptTripView(APIView):
         trip.cab=cab
         if ride_type_id:
             trip.ride_type_id = ride_type_id
-        if trip.rent_price is None:
+        if trip.rent_price is None or trip.rent_price <= 0:
             cab_price = CabBookingPrice.objects.get(cab_class_id=ride_type_id)
             trip.rent_price = cab_price.base_fare * trip.distance
         trip.status = 'BOOKED'

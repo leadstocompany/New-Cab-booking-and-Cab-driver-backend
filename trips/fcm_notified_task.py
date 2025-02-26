@@ -23,7 +23,7 @@ def fcm_push_notification_trip_booking_request_to_drivers(trip_id,drivers, sched
             try:
                 cab_custom_price = trip.rent_price
                 
-                if trip.ride_type is None or trip.total_fare is None:
+                if trip.ride_type is None or trip.rent_price is None or trip.rent_price <= 0:
                     vehicle = Vehicle.objects.get(driver_id=driver.id)
                     cabclass_value = CabBookingPrice.objects.get(cab_class_id=vehicle.cab_class.id)
                     cab_custom_price = cabclass_value.base_fare * trip.distance

@@ -6,21 +6,21 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 
-def booking_request_notify_driver(driver, trip, scheduled_datetime):
+def booking_request_notify_driver(driver, trip, scheduled_datetime, custom_price = None, cab_class_custom = None):
     try:
         trip_data={
             'type': 'send_trip_request',
             'trip_id': str(trip.id),
             'source': trip.source,
             'destination': trip.destination,
-            'ride_type': trip.ride_type.cab_class,
+            'ride_type': trip.ride_type.cab_class if not cab_class_custom else cab_class_custom,
             'scheduled_datetime':str(scheduled_datetime),
             'payment_type':trip.payment_type,
             'pickup_latitude':str(trip.pickup_latitude),
             'pickup_longitude':str(trip.pickup_longitude),
             'dropup_latitude':str(trip.dropup_latitude),
             'dropup_longitude':str(trip.dropup_longitude),
-            'rent_price':float(trip.rent_price),
+            'rent_price':float(trip.rent_price) if not custom_price else float(custom_price),
             'passenger_name':trip.customer.first_name + " " + trip.customer.last_name,
             "passenger_phone": trip.customer.phone,
             "passenger_photo":trip.customer.photo_upload

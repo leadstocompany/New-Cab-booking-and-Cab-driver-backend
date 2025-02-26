@@ -1,3 +1,4 @@
+from cabs.models import CabBookingPrice, Vehicle
 from trips.models import Trip
 from django.db.models import Q
 from accounts.models import User, CurrentLocation
@@ -20,8 +21,14 @@ def fcm_push_notification_trip_booking_request_to_drivers(trip_id,drivers, sched
        
         for driver in drivers:
             try:
+                cab_custom_price = trip.rent_price
+                
+                if trip.ride_type is None or trip.total_fare is None:
+                    vehicle = Vehicle.objects.get(driver_id=driver.id)
+                    cabclass_value = CabBookingPrice.objects.get(cab_class_id=vehicle.cab_class.id)
+                    cab_custom_price = cabclass_value.base_fare * trip.distance
                 title=f"New Ride request comming"
-                body=f"New ride request comming form {trip.source} to {trip.destination} and ride charge {float(trip.rent_price)}"
+                body=f"New ride request comming form {trip.source} to {trip.destination} and ride charge {float(cab_custom_price)}"
                 print(driver.fcm_token, 'token')
                 response_data=send_fcm_notification(driver.fcm_token, title, body)
                 logger.info(f"FCM notification Processing data {trip.id}: {response_data}")

@@ -130,6 +130,9 @@ class AcceptTripView(APIView):
         trip.cab=cab
         if ride_type_id:
             trip.ride_type_id = ride_type_id
+        if trip.rent_price is None:
+            cab_price = CabBookingPrice.objects.get(cab_class_id=ride_type_id)
+            trip.rent_price = cab_price.base_fare * trip.distance
         trip.status = 'BOOKED'
         trip.save()
         fcm_push_notification_trip_accepted(trip_id)

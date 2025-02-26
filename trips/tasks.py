@@ -3,6 +3,7 @@
 from celery import shared_task
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from cabs.models import CabBookingPrice, Vehicle
 from trips.fcm_notified_task import fcm_push_notification_trip_booking_request_to_drivers
 from trips.models import Trip
 from trips.notifications import booking_request_notify_driver, notify_trip_booked, send_real_time_notification, notify_trip_request_cancel
@@ -84,8 +85,14 @@ def booking_request_notify_drivers(trip_id,driver_ids, scheduled_datetime):
         # Notify drivers
         drivers=Driver.objects.filter(id__in=driver_ids)
         for driver in drivers:
-            print("yes")
-            booking_request_notify_driver(driver, trip, scheduled_datetime)
+            cab_custom_price = None
+            cab_class_custom = None
+            if trip.ride_type is None or trip.total_fare is None:
+                vehicle = Vehicle.objects.get(driver_id=driver.id)
+                cabclass_value = CabBookingPrice.objects.get(cab_class=vehicle.cab_class)
+                cab_custom_price = cabclass_value.base_fare * trip.distance
+                cab_class_custom = vehicle.cab_class.cab_class
+            booking_request_notify_driver(driver, trip, scheduled_datetime, cab_custom_price, cab_class_custom)
     except Exception as e:
         logger.error(f"Celery Error occurred: {e}")
         print("celery error :", e)
@@ -97,6 +104,7 @@ def schedule_driver_notifications(trip_id, pickup_latitude, pickup_longitude, sc
     # Get nearest drivers at notification time
     drivers=get_nearest_driver_list(trip.id, pickup_latitude, pickup_longitude)
     driver_ids = [driver.id for driver in drivers]
+    print(driver_ids)
     fcm_push_notification_trip_booking_request_to_drivers(trip.id,drivers, scheduled_datetime)
     booking_request_notify_drivers.delay(trip.id,driver_ids, scheduled_datetime)
 

@@ -118,7 +118,7 @@ class CabBookingPrice(models.Model):
         db_table = 'cabbookingprice'
     objects=models.Manager()
     def __str__(self):
-        return self.base_fare
+        return str(self.base_fare)
 
 
 

@@ -1,5 +1,6 @@
+from django.http import JsonResponse
 from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
@@ -7,6 +8,8 @@ from utility.pagination import CustomPagination
 from .models import DriverSupport, CustomerSupport
 from .serializers import DriverSupportSerializer, CustomerSupportSerializer
 from utility.permissions import IsAdminOrSuperuser
+from rest_framework.views import APIView
+
 import logging
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -141,3 +144,19 @@ class AdminPanelCustomerSupportDetailView(generics.RetrieveAPIView):
         except CustomerSupport.DoesNotExist as e:
             logger.error(f"Error occurred: {e}")
             return Response({"error": "CustomerSupport entry not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+class ResolveDriverSupportRequest(APIView):
+    permission_classes = [IsAdminOrSuperuser]
+
+    def post(self, request, pk):
+        try:
+            support_request = DriverSupport.objects.get(pk=pk, status='raised')
+        except DriverSupport.DoesNotExist:
+            return JsonResponse({'message': 'Support request not found or already resolved.'}, status=status.HTTP_404_NOT_FOUND)
+
+        support_request.status = 'resolved'
+        support_request.save()
+
+        serializer = DriverSupportSerializer(support_request)  # Serialize the updated object
+
+        return JsonResponse({'message': 'Support request resolved successfully.'}, status=status.HTTP_200_OK)

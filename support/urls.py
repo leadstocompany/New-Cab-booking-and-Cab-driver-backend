@@ -7,6 +7,7 @@ urlpatterns = [
     path('driver-support/<int:pk>/', views.DriverSupportDetailView.as_view(), name='driver-support-detail'),
     path('admin/driver-support/', views.AllDriverSupportListView.as_view(), name='all-driver-support-list-for-admin'),
     path('admin/driver-support/<int:pk>/', views.AdminPanelDriverSupportDetailView.as_view(), name='driver-support-detail-for-admin'),
+    path('admin/driver-support/<int:pk>/resolve/', views.ResolveDriverSupportRequest.as_view(), name='resolve-driver-support'),
 
     path('customer-support/create', views.CustomerSupportCreateView.as_view(), name='customer-support-create'),
     path('customer-support/', views.CustomerSupportListView.as_view(), name='customer-support-list'),

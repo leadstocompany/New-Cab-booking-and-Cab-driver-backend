@@ -8,6 +8,7 @@ class DriverSupport(models.Model):
     subject=models.CharField(max_length=500)
     massege=models.TextField()
     created_at=models.DateTimeField(default=timezone.localtime(timezone.now()))
+    status = models.CharField(db_default="raised")
     def __str__(self):
         return f'{self.subject}'
 

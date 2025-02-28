@@ -45,12 +45,23 @@ class VehicleModelSerializer(serializers.ModelSerializer):
         self.fields['maker'] = VehicleMakerSerializer(read_only=True)
         return super(VehicleModelSerializer, self).to_representation(instance)
 
+
+
 class VehicaleDetailsSerializer(serializers.ModelSerializer):
     driver = serializers.HiddenField(
     default=serializers.CurrentUserDefault())
+    booking_price = serializers.SerializerMethodField()
+
     class Meta:
         model = Vehicle
         exclude = ['is_approved',]
+    
+    def get_booking_price(self, obj):
+        if obj.cab_class:
+            booking_price = CabBookingPrice.objects.filter(cab_class=obj.cab_class).first()
+            if booking_price:
+                return CabBookingPriceSerializer(booking_price).data
+        return None
     def create(self, validated_data):
         validated_data = self._get_set_cab_class(validated_data)
         return super().create(validated_data)

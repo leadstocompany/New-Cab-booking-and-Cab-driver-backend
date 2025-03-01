@@ -175,7 +175,10 @@ class CancelTripView(APIView):
 
         try:
             trip = Trip.objects.get(id=trip_id)
-            if trip.status not in ['CANCELLED', 'COMPLETED', 'ON_TRIP']:
+            if trip.status == 'REQUESTED' and user.type == User.Types.CUSTOMER:
+                trip.delete()
+                return Response({"detail": "Trip cancelled successfully."}, status=status.HTTP_200_OK)
+            elif trip.status not in ['CANCELLED', 'COMPLETED', 'ON_TRIP']:
                 trip.status = 'CANCELLED'
                 trip.canceled_by = user
                 trip.cancel_reason = cancel_reason
@@ -240,7 +243,7 @@ class CompleteTripView(APIView):
         try:
             trip = Trip.objects.get(id=trip_id)
             if trip.status == 'ON_TRIP' and trip.driver == user:
-                trip.status = 'COMPLETED'
+                # trip.status = 'COMPLETED'
                 trip.ride_end_time=timezone.localtime(timezone.now())
                 trip.save()
                 fcm_push_notification_trip_completed(trip.id, trip.customer.id, trip.driver.id)
@@ -393,7 +396,11 @@ class PassengerTripListView(APIView):
                 logger.error(f"Error occurred: {e}")
             
 
-        schedule_ride=Trip.objects.filter(status='BOOKED',customer=self.request.user, scheduled_datetime__isnull=False).order_by('-created_at')
+        schedule_ride = Trip.objects.filter(
+            customer=self.request.user,
+            scheduled_datetime__isnull=False,
+            scheduled_datetime__le=timezone.localtime()
+        ).exclude(status__in=['ACCEPTED', 'REJECTED', 'CANCELLED', 'ON_TRIP', '']).order_by('-created_at')
         # Serialize the filtered trips
         schedule_ride_serializer = TripSerializer(schedule_ride, many=True)
         schedule_ride_data=schedule_ride_serializer.data
@@ -429,7 +436,7 @@ class PassengerTripListView(APIView):
                 logger.error(f"Error occurred: {e}")
                 print(e)
         # cancelled_ride=Trip.objects.filter(status='CANCELLED',customer=self.request.user,driver__isnull=False)
-        cancelled_ride=Trip.objects.filter(status='CANCELLED',customer=self.request.user).order_by('-created_at')
+        cancelled_ride=Trip.objects.filter(status__in=['CANCELLED', 'REJECTED'],customer=self.request.user).order_by('-created_at')
         cancelled_ride_serializer = TripSerializer(cancelled_ride, many=True)
         cancelled_ride_data=cancelled_ride_serializer.data
         for ride in cancelled_ride_data:

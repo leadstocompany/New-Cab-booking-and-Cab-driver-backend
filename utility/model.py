@@ -9,11 +9,16 @@ from JLP_MyRide import settings
 
 class BaseModel(models.Model):
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(default=timezone.now)  # Stores datetime in UTC
+    created_at = models.DateTimeField(default=timezone.localtime)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
+    
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created_at = timezone.localtime()
+        super().save(*args, **kwargs)
 
 
 class CloudinaryBaseModelUser(models.Model):

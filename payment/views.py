@@ -304,6 +304,7 @@ class WalletPaymentView(APIView):
             driver_wallet.balance += Decimal(str(amount))
             driver_wallet.save()
             trip.payment_status = 'paid'
+            trip.status = 'COMPLETED'
             trip.save()
             fcm_push_notification_trip_payment_complete(payment.id)
             trip_payment_complete_task(payment.id)
@@ -340,6 +341,7 @@ class CashPaymentView(APIView):
             )
 
             trip.payment_status = 'paid'
+            trip.status = 'COMPLETED'
             trip.save()
             Transaction.objects.create(
                 user=trip.driver,
@@ -375,6 +377,7 @@ class CashPaymentView(APIView):
             )
 
             trip.payment_status = 'failed'
+            trip.status = 'COMPLETED'
             trip.save()
             return Response({"detail": "Payment Failed."}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -428,6 +431,7 @@ class UpdateTripPaymentSuccessView(APIView):
 
             trip = payment.trip
             trip.payment_status = 'paid'
+            trip.status = 'COMPLETED'
             trip.save()
 
             Transaction.objects.create(

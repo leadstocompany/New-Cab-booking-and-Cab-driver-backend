@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Wallet, Transaction
-from .serializers import WalletSerializer, TransactionSerializer, IncomeTransactionSerializer, ExpenseTransactionSerializer
+from .serializers import WalletSerializer, TransactionSerializer, IncomeTransactionSerializer, ExpenseTransactionSerializer, UserProfileSerializer
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import datetime, time
@@ -320,8 +320,8 @@ class UserTransactionListView(generics.ListAPIView):
         queryset = self.get_queryset()
         deposite = queryset.filter(transaction_type="DEPOSIT")
         withdraw = queryset.filter(transaction_type="WITHDRAW")
+        all_transactions = self.get_serializer(queryset, many=True)
 
-       
         date = self.request.query_params.get('date', None)
         if date:
             parsed_date = parse_date(date)
@@ -329,7 +329,7 @@ class UserTransactionListView(generics.ListAPIView):
                 deposite = deposite.filter(date__date=parsed_date)
                 withdraw = withdraw.filter(date__date=parsed_date)
 
-        
+
         start_date = self.request.query_params.get('start_date', None)
         end_date = self.request.query_params.get('end_date', None)
         if start_date and end_date:
@@ -337,21 +337,25 @@ class UserTransactionListView(generics.ListAPIView):
             withdraw = withdraw.filter(date__date__range=[start_date, end_date])
         deposite_serializer = self.get_serializer(deposite, many=True)
         withdraw_serializer = self.get_serializer(withdraw, many=True)
-        # Fetch wallet details for the user
+
         user_id = self.kwargs['user_id']
         user = get_object_or_404(User, id=user_id)
-        wallet = Wallet.objects.filter(user=user).first()  # Assuming there's a Wallet model
+        wallet = Wallet.objects.filter(user=user).first()
 
-        # Create wallet details dictionary
         wallet_details = {
-            "name":wallet.user.first_name + " " + wallet.user.last_name,
-            "profile_pic":wallet.user.photo_upload,
+            "name": wallet.user.first_name + " " + wallet.user.last_name,
+            "profile_pic": wallet.user.photo_upload,
             "balance": wallet.balance if wallet else 0,
-            "currency":"USD",  # Example fields
+            "currency": "USD",
         }
 
+        # Serialize the user object
+        user_serializer = UserProfileSerializer(user)
+
         return Response({
-            "wallet":wallet_details,
+            "user": user_serializer.data,
+            "wallet": wallet_details,
+            "transactions": all_transactions.data,
             "deposite": deposite_serializer.data,
             "withdraw": withdraw_serializer.data
         }, status=status.HTTP_200_OK)

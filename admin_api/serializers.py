@@ -435,7 +435,7 @@ class DriverDetailsSerializer(serializers.ModelSerializer):
         current_ride= Trip.objects.filter(driver_id=driver_id, status='ON_TRIP').first()
         active_rides_details={
             'scheduled_ride':TripSerializer(scheduled_rides, many=True).data,
-            'current_ride':TripSerializer(current_ride).data
+            'current_ride': TripSerializer(current_ride).data if current_ride else None
         }
         return active_rides_details
    

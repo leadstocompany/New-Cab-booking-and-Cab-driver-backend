@@ -363,7 +363,7 @@ class DriverCreateView(generics.CreateAPIView):
 
 class DriverListView(generics.ListAPIView):
     # queryset = Driver.objects.all().order_by("-date_joined")
-    queryset=User.objects.filter(type=User.Types.DRIVER, profile_status__in=['Pending','Approve']).order_by("-date_joined")
+    queryset=User.objects.filter(type=User.Types.DRIVER, profile_status__in=['Approve']).order_by("-date_joined")
     serializer_class = DriverListSerializer
     permission_classes = [IsAdminOrSuperuser]
     pagination_class = CustomPagination  

@@ -432,10 +432,14 @@ class DriverDetailsSerializer(serializers.ModelSerializer):
     def get_active_rides_details(self, obj):
         driver_id=obj.id
         scheduled_rides=Trip.objects.filter(driver_id=driver_id, status='BOOKED', scheduled_datetime__isnull=False).order_by('-created_at')
-        current_ride= Trip.objects.filter(driver_id=driver_id, status='ON_TRIP').first()
+        current_ride= Trip.objects.filter(driver_id=driver_id, status__in=['ON_TRIP']).first()
+        if current_ride:
+            current_ride=TripSerializer(current_ride).data
+        else:
+            current_ride=None
         active_rides_details={
             'scheduled_ride':TripSerializer(scheduled_rides, many=True).data,
-            'current_ride': TripSerializer(current_ride).data if current_ride else None
+            'current_ride': current_ride
         }
         return active_rides_details
    

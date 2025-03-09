@@ -183,7 +183,59 @@ class BookedRideDriverTrackerConsumer(AsyncWebsocketConsumer):
             'current_longitude': driver.current_longitude,
             'timestamp':str(driver.timestamp)
         }
-      
+    
+class DriverLocationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.driver_id = self.scope['url_route']['kwargs']['driver_id']
+        self.group_name = f'driver_location_{self.driver_id}'
+        
+        await self.channel_layer.group_add(
+            self.group_name,
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        location_data = json.loads(text_data)
+        
+        # Save location to database
+        await self.update_driver_location(
+            latitude=location_data.get('latitude'),
+            longitude=location_data.get('longitude')
+        )
+
+        # Broadcast location update
+        await self.channel_layer.group_send(
+            self.group_name,
+            {
+                'type': 'location_update',
+                'latitude': location_data.get('latitude'),
+                'longitude': location_data.get('longitude'),
+                'timestamp': str(datetime.now())
+            }
+        )
+
+    async def location_update(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    @database_sync_to_async
+    def update_driver_location(self, latitude, longitude):
+        from accounts.models import CurrentLocation, User
+        CurrentLocation.objects.update_or_create(
+            user=User.objects.get(id=self.driver_id),
+            defaults={
+                'current_latitude': latitude,
+                'current_longitude': longitude,
+                'timestamp': datetime.now()
+            }
+        )
+
 
 # sandip comment part api
 # import json

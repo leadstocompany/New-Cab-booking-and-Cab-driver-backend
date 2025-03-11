@@ -37,7 +37,39 @@ class TripRatingAPI(generics.ListCreateAPIView):
     def get_queryset(self):
         return TripRating.objects.filter(is_active=True, trip__customer=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        try:
+            trip = Trip.objects.get(id=request.data.get('trip_id'))
+            
+            # Get IDs from request or fallback to defaults
+            driver_id = request.data.get('driver_id') or trip.driver.id
+            customer_id = request.data.get('customer_id') or request.user.id
 
+            data = {
+                'trip_id': trip.id,
+                'driver_id': driver_id,
+                'customer_id': customer_id,
+                'rating': request.data.get('rating'),
+                'review': request.data.get('review', '')
+            }
+
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Trip.DoesNotExist:
+            return Response(
+                {"error": "Trip not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error occurred: {e}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class ActiveFeedbackSettingList(generics.ListAPIView):

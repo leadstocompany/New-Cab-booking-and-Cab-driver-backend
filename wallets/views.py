@@ -261,11 +261,13 @@ class GetTransactionView(APIView):
             # Calculate total expenses for customers   
             deposit = Transaction.objects.filter(user=user,transaction_type="DEPOSIT").order_by('-date')
             deposit_serializer=TransactionSerializer(deposit, many=True)
-            expense= Transaction.objects.filter(user=user,transaction_type__in=["WITHDRAW", "EXPENSE"]).order_by('-date')
+            expense= Transaction.objects.filter(user=user,transaction_type__in="EXPENSE").order_by('-date')
             expense_serializer=ExpenseTransactionSerializer(expense, many=True)
+            withdraw = Transaction.objects.filter(user=user,transaction_type="WITHDRAW").order_by('-date')
             data = {
                 'expenses': expense_serializer.data,
                 "deposit":deposit_serializer.data,
+                "withdraw":withdraw
             }
         else:
             # Filter transactions that are of type "DEPOSIT" and created today
@@ -273,10 +275,12 @@ class GetTransactionView(APIView):
             payments_serializer=IncomeTransactionSerializer(payments, many=True)
             withdraw = Transaction.objects.filter(user=user,transaction_type="WITHDRAW").order_by('-date')
             withdraw_serializer=TransactionSerializer(withdraw, many=True)
-
+            deposit = Transaction.objects.filter(user=user,transaction_type="DEPOSIT").order_by('-date')
+            deposit_serializer=TransactionSerializer(deposit, many=True)
             data = {
                 "payments":payments_serializer.data,
                 "withdraw":withdraw_serializer.data
+                ,"deposit":deposit_serializer.data
             }
         
         return Response(data, status=status.HTTP_200_OK)

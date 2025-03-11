@@ -33,4 +33,5 @@ urlpatterns = [
     path('add-fcm-token/', views.SaveFCMTokenView.as_view(), name='save-fcm-token'),
     path('driver-duty-on-off/', views.DriverDutyOnOffView.as_view(), name='drive-duaty-onoff'),
     path('driver/analytics/', views.DriverAnalyticsView.as_view(), name='driver-analytics'),
+    path('driver/daily-analytics/', views.DriverDailyAnalyticsView.as_view(), name='driver-today-analytics'),
 ]

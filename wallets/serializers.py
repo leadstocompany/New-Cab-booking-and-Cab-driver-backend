@@ -17,9 +17,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     user = UserProfileSerializer()
+    sender = UserProfileSerializer(allow_null=True)
+    reciever = UserProfileSerializer(allow_null=True)
     class Meta:
         model = Transaction
-        fields = ['user', 'amount', 'transaction_type','transaction_mode', 'date', 'remark']
+        fields = ['user', 'amount', 'transaction_type','transaction_mode', 'date', 'remark', 'sender', 'reciever']
 
 
 class IncomeTransactionSerializer(serializers.ModelSerializer):

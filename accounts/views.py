@@ -549,3 +549,60 @@ class DriverAnalyticsView(APIView):
                 },
             }
         )
+
+
+class DriverDailyAnalyticsView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        driver = request.user
+        
+        # Get today's start and end times in local timezone
+        today = timezone.localtime(timezone.now())
+        start_of_day = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+        # Get yesterday's start and end times
+        yesterday_start = start_of_day - timezone.timedelta(days=1)
+        yesterday_end = end_of_day - timezone.timedelta(days=1)
+
+        base_query = Trip.objects.filter(
+            driver=driver, 
+            status="COMPLETED", 
+            payment_status="paid"
+        )
+
+        # Today's data
+        today_data = base_query.filter(
+            ride_start_time__range=(start_of_day, end_of_day)
+        )
+
+        # Yesterday's data
+        yesterday_data = base_query.filter(
+            ride_start_time__range=(yesterday_start, yesterday_end)
+        )
+
+        # Calculate today's metrics
+        today_rides = today_data.count()
+        today_income = today_data.aggregate(Sum("total_fare"))["total_fare__sum"] or 0
+        today_distance = today_data.aggregate(Sum("distance"))["distance__sum"] or 0
+
+        # Calculate yesterday's metrics
+        yesterday_rides = yesterday_data.count()
+        yesterday_income = yesterday_data.aggregate(Sum("total_fare"))["total_fare__sum"] or 0
+        yesterday_distance = yesterday_data.aggregate(Sum("distance"))["distance__sum"] or 0
+
+        return Response({
+            "total_income": {
+                "amount": today_income,
+                "percentage": calculate_percentage_change(yesterday_income, today_income),
+            },
+            "total_rides": {
+                "amount": today_rides,
+                "percentage": calculate_percentage_change(yesterday_rides, today_rides),
+            },
+            "total_distance": {
+                "amount": today_distance,
+                "percentage": calculate_percentage_change(yesterday_distance, today_distance),
+            },
+        })

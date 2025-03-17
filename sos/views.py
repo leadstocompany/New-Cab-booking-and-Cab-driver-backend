@@ -108,7 +108,7 @@ class SOSMessageDeleteView(generics.DestroyAPIView):
 
 
 class ActivateSOSHelpRequestList(generics.ListAPIView):
-    queryset = SOSHelpRequest.objects.filter(resolved=False)
+    queryset = SOSHelpRequest.objects.filter(resolved=False).order_by("-created_at")
     serializer_class = SOSHelpRequestListSerializer
     permission_classes = [IsAdminOrSuperuser]
     pagination_class = CustomPagination

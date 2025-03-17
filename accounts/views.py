@@ -103,8 +103,8 @@ class DriverOTPVerifyLoginAPI(views.APIView):
             hotp = pyotp.HOTP(driver.hash(), 4)
             phone_obj = driver.driverphoneverify
             if otp and phone:
-                # if str(otp) == hotp.at(phone_obj.count):
-                if str(otp) == "1234":
+                if str(otp) == hotp.at(phone_obj.count):
+                # if str(otp) == "1234":
                     token, _ = Token.objects.get_or_create(user=driver)
                     print(Token.objects.get_or_create(user=driver)[0].__dict__)
                     return Response(data={"status": True, "token":token.key}, status=status.HTTP_201_CREATED)

@@ -50,7 +50,7 @@ class DriverRegisterAPI(views.APIView):
 
     def post(self, request, *args, **kwargs):
         phone = request.data.get("phone", None)
-
+        phone = f"+60{phone}" if "+60" not in phone else phone
         try:
             if User.objects.filter(phone=phone).exists():
                 print("JLP")
@@ -69,7 +69,7 @@ class DriverLoginAPI(views.APIView):
 
     def post(self, request, *args, **kwargs):
         phone = request.data.get("phone", None)
-
+        phone = f"+60{phone}" if "+60" not in phone else phone
         try:
             if User.objects.filter(phone=phone).exists():
                 driver = Driver.objects.filter(phone=phone).first()
@@ -94,6 +94,7 @@ class DriverOTPVerifyLoginAPI(views.APIView):
 
     def post(self, request, *args, **kwargs):
         phone = request.data.get("phone", None)
+        phone = f"+60{phone}" if "+60" not in phone else phone
         otp = request.data.get("otp", None)
         try:
             if not Driver.objects.filter(phone=phone).exists():
@@ -103,8 +104,8 @@ class DriverOTPVerifyLoginAPI(views.APIView):
             hotp = pyotp.HOTP(driver.hash(), 4)
             phone_obj = driver.driverphoneverify
             if otp and phone:
-                # if str(otp) == hotp.at(phone_obj.count):
-                if str(otp) == "1234":
+                if str(otp) == hotp.at(phone_obj.count):
+                # if str(otp) == "1234":
                     token, _ = Token.objects.get_or_create(user=driver)
                     print(Token.objects.get_or_create(user=driver)[0].__dict__)
                     return Response(data={"status": True, "token":token.key}, status=status.HTTP_201_CREATED)
@@ -126,6 +127,7 @@ class CustomerRegisterAPI(views.APIView):
 
     def post(self, request, *args, **kwargs):
         phone = request.data.get("phone", None)
+        phone = f"+60{phone}" if "+60" not in phone else phone
         referrer = request.data.get("referrer", None)
 
         try:
@@ -157,6 +159,7 @@ class LoginCustomerwithPhoneNumberApi(views.APIView):
     def post(self, request, *args, **kwargs):
         try:
             phone = request.data.get("phone", None)
+            phone = f"+60{phone}" if "+60" not in phone else phone
             if phone:
                 if not User.objects.filter(phone=phone).exists():
                     customer = Customer.objects.create(phone=phone, code=create_ref_code())
@@ -184,6 +187,7 @@ class CustomerOtpVerifyLoginAPI(views.APIView):
 
     def post(self, request, *args, **kwargs):
         phone = request.data.get("phone", None)
+        phone = f"+60{phone}" if "+60" not in phone else phone
         otp = request.data.get("otp", None)
         try:
             if not Customer.objects.filter(phone=phone).exists():
@@ -192,8 +196,8 @@ class CustomerOtpVerifyLoginAPI(views.APIView):
             hotp = pyotp.HOTP(customer.hash(), 4)
             phone_obj = customer.customerphoneverify
             if otp and phone:
-                # if str(otp) == hotp.at(phone_obj.count):
-                if str(otp) == "1234":
+                if str(otp) == hotp.at(phone_obj.count):
+                # if str(otp) == "1234":
                     token, _ = Token.objects.get_or_create(user=customer)
                     return Response(data={"status": True, "user_id":customer.id,"token": token.key}, status=status.HTTP_201_CREATED)
                 else:
@@ -438,6 +442,86 @@ class CurrentLocationAPIView(APIView):
             location = CurrentLocation.objects.create(user=user, current_latitude=latitude, current_longitude=longitude)
             serializer = CurrentLocationSerializer(location)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+from django.core.cache import cache
+from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import permissions, status
+from accounts.models import CurrentLocation
+
+class GetUserLocationsAPIView(APIView):
+    """
+    API to get both driver and customer current location data.
+    Uses caching to optimize performance for frequent calls (every 5 seconds).
+    """
+    
+    def get(self, request):
+        try:
+            # Get driver_id and customer_id from query parameters
+            driver_id = request.query_params.get('driver_id')
+            customer_id = request.query_params.get('customer_id')
+            
+            if not driver_id or not customer_id:
+                return Response(
+                    {"error": "Both driver_id and customer_id parameters are required"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create cache keys for both users
+            driver_cache_key = f'driver_location_{driver_id}'
+            customer_cache_key = f'customer_location_{customer_id}'
+            
+            # Try to get locations from cache first
+            driver_location = cache.get(driver_cache_key)
+            customer_location = cache.get(customer_cache_key)
+            
+            # If not in cache, fetch from database
+            if driver_location is None:
+                try:
+                    driver_loc_obj = CurrentLocation.objects.get(user_id=driver_id)
+                    driver_location = {
+                        'user_id': driver_id,
+                        'current_latitude': driver_loc_obj.current_latitude,
+                        'current_longitude': driver_loc_obj.current_longitude,
+                        'timestamp': str(driver_loc_obj.timestamp)
+                    }
+                    # Cache for 4 seconds (slightly less than the 5-second call interval)
+                    cache.set(driver_cache_key, driver_location, 4)
+                except CurrentLocation.DoesNotExist:
+                    driver_location = {
+                        'user_id': driver_id,
+                        'error': 'Location not found'
+                    }
+            
+            if customer_location is None:
+                try:
+                    customer_loc_obj = CurrentLocation.objects.get(user_id=customer_id)
+                    customer_location = {
+                        'user_id': customer_id,
+                        'current_latitude': customer_loc_obj.current_latitude,
+                        'current_longitude': customer_loc_obj.current_longitude,
+                        'timestamp': str(customer_loc_obj.timestamp)
+                    }
+                    # Cache for 4 seconds
+                    cache.set(customer_cache_key, customer_location, 4)
+                except CurrentLocation.DoesNotExist:
+                    customer_location = {
+                        'user_id': customer_id,
+                        'error': 'Location not found'
+                    }
+            
+            # Return only the driver_location and customer_location
+            return Response({
+                'driver_location': driver_location,
+                'customer_location': customer_location
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ActiveCityListView(generics.ListAPIView):

@@ -63,7 +63,7 @@ class DriverDetailSerializer(serializers.ModelSerializer):
 
 
 class SOSHelpRequestDetailSerializer(serializers.ModelSerializer):
-    customer = CustomerDetailSerializer(source='user')
+    customer = CustomerDetailSerializer(source='trip.customer')
     driver_details = DriverDetailSerializer(source='trip.driver')
     ride_details = TripSerializer(source='trip')
     name = serializers.CharField(source='user.full_name')

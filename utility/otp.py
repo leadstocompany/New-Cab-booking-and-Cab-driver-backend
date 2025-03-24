@@ -35,7 +35,7 @@ def send_otp(otp: int, phone: str):
         
         # Create and send the message
         message = client.messages.create(
-            body=f'Your OTP is {otp}',
+            body=f'Your OTP Jomlah Ride is {otp}',
             from_=settings.TWILIO_PHONE_NUMBER,
             to=phone
         )

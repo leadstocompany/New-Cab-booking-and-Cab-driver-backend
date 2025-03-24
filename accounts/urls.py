@@ -34,4 +34,6 @@ urlpatterns = [
     path('driver-duty-on-off/', views.DriverDutyOnOffView.as_view(), name='drive-duaty-onoff'),
     path('driver/analytics/', views.DriverAnalyticsView.as_view(), name='driver-analytics'),
     path('driver/daily-analytics/', views.DriverDailyAnalyticsView.as_view(), name='driver-today-analytics'),
+    path('user-locations/', views.GetUserLocationsAPIView.as_view(), name='user-locations'),
+
 ]

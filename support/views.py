@@ -8,7 +8,12 @@ from utility.pagination import CustomPagination
 from .models import DriverSupport, CustomerSupport
 from .serializers import DriverSupportSerializer, CustomerSupportSerializer
 from utility.permissions import IsAdminOrSuperuser
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
+
+# from rest_framework.generics import APIView
 
 import logging
 logger = logging.getLogger(__name__)
@@ -144,11 +149,12 @@ class AdminPanelCustomerSupportDetailView(generics.RetrieveAPIView):
         except CustomerSupport.DoesNotExist as e:
             logger.error(f"Error occurred: {e}")
             return Response({"error": "CustomerSupport entry not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-class ResolveDriverSupportRequest(APIView):
-    permission_classes = [IsAdminOrSuperuser]
 
-    def post(self, request, pk):
+# @method_decorator(csrf_exempt, name='dispatch')
+
+class ResolveDriverSupportRequest(APIView):
+
+    def get(self, request, pk):
         try:
             support_request = DriverSupport.objects.get(pk=pk, status='raised')
         except DriverSupport.DoesNotExist:

@@ -497,94 +497,44 @@ class PassengerTripListView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+class PickupRadiusView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = PickupRadius.objects.all()
+    serializer_class = PickupRadiusSerializer
+    permission_classes = [permissions.AllowAny]
 
+    def get(self, request, *args, **kwargs):
+        try:
+            # Ensure only one record exists
+            pickup_radius = PickupRadius.objects.first()
+            if not pickup_radius:
+                return Response({"detail": "No data found."}, status=status.HTTP_404_NOT_FOUND)
+            serializer = self.get_serializer(pickup_radius)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request, *args, **kwargs):
+        pickup_radius = PickupRadius.objects.first()
+        if not pickup_radius:
+            return Response({"detail": "No data found to update."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(pickup_radius, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def delete(self, request, *args, **kwargs):
+        pickup_radius = PickupRadius.objects.first()
+        if not pickup_radius:
+            return Response({"detail": "No data found to delete."}, status=status.HTTP_404_NOT_FOUND)
+        pickup_radius.delete()
+        return Response({"detail": "Pickup radius deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
+class PickupRadiusCreateView(generics.CreateAPIView):
+    queryset = PickupRadius.objects.all()
+    serializer_class = PickupRadiusSerializer
+    permission_classes = [permissions.AllowAny]
 
-
-
-
-# from trips.models import Trip
-# from trips.notifications import booking_request_notify_driver, notify_trip_booked, send_real_time_notification
-# from django.db.models import Q
-# from accounts.models import User, CurrentLocation
-# from subscriptions.models import Subscriptions
-# from django.utils import timezone
-# from datetime import timedelta
-# from django.core.mail import send_mail
-# from decimal import Decimal
-
-
-
-# def notify_drivers(trip_id, latitude, longitude,scheduled_datetime):
-   
-#     trip = Trip.objects.get(id=trip_id)
-#     max_distance = 5.0  # This could be made dynamic
-#     radius = 6371  # Earth's radius in kilometers
-
-#     def haversine(lat1, lon1, lat2, lon2):
-#         import math
-#         lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-#         dlat = lat2 - lat1
-#         dlon = lon2 - lon1
-#         a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-#         c = 2 * math.asin(math.sqrt(a))
-#         return radius * c
-
-#     active_trip_statuses = ['ACCEPTED', 'BOOKED', 'ON_TRIP']
-#     drivers_without_active_trips = User.objects.filter(
-#         type=User.Types.DRIVER, driver_duty=True
-#     ).exclude(
-#         Q(driver_trips__status__in=active_trip_statuses)
-#     ).distinct()
-#     print(trip.ride_type)
-#     if trip.ride_type_id:
-#         print("yes one")
-#         drivers_without_active_trips = drivers_without_active_trips.filter(vehicles__cab_class__id=trip.ride_type_id)
-
-#     nearby_drivers = []
-
-#     for driver in drivers_without_active_trips:
-#         # print("yes two")
-#         try:
-#             subscription = Subscriptions.objects.filter(driver=driver, is_active=True).first()
-#             # if subscription and subscription.pending_rides > 0:
-#             if subscription:
-                 
-#                 if not subscription.is_expired():
-#                     location = driver.currentlocation
-#                     print(location.current_latitude, location.current_longitude)
-#                     print("yes two")
-#                     #  location = driver.currentlocation
-#                     distance = haversine(float(latitude), float(longitude), float(location.current_latitude), float(location.current_longitude))
-#                     print(distance, "or", max_distance)
-#                     if distance <= max_distance:
-#                         nearby_drivers.append(driver)
-                
-#         except CurrentLocation.DoesNotExist:
-#             continue
-#     print(nearby_drivers, "10000000000000000000000000")
-#     # Notify drivers
-#     for driver in nearby_drivers:
-#         print("yes")
-#         booking_request_notify_driver(driver, trip, scheduled_datetime)
-
-
-
-# def notify_trip_accepted(trip_id, driver):
-#     trip = Trip.objects.get(id=trip_id)
-#     # if trip.status != 'REQUESTED':
-#     #     return
-
-#     # trip.driver = driver
-#     # trip.status = 'BOOKED'
-#     # trip.save()
-
-#     # Notify the customer
-#     notify_trip_booked(trip.customer, trip)
-
-#     # Notify other drivers that the trip has been booked
-#     # other_drivers = trip.driver_trips.filter(status='REQUESTED').exclude(driver=driver)
-#     # for other_driver in other_drivers:
-#     #     notify_trip_booking_closed(other_driver, trip)
+    def post(self, request, *args, **kwargs):
+        if PickupRadius.objects.exists():
+            return Response({"detail": "Only one record is allowed."}, status=status.HTTP_400_BAD_REQUEST)
+        return super().post(request, *args, **kwargs)

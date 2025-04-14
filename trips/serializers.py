@@ -3,6 +3,7 @@ from trips.models import *
 from accounts.serializers import DriverProfileSerializer, CustomerProfileSerializer
 from cabs.models import Vehicle
 from cabs.serializers import CabClassSerializer
+from trips.models import PickupRadius
 
 class CabSerializer(serializers.ModelSerializer):
     
@@ -46,4 +47,9 @@ class TripRatingSerializer(serializers.ModelSerializer):
         self.fields['trip'] =  TripSerializer(read_only=True)
 
         return super(TripRatingSerializer, self).to_representation(instance)
+
+class PickupRadiusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PickupRadius
+        fields = ['id', 'radius']
 

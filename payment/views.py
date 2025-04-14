@@ -16,6 +16,7 @@ from JLP_MyRide import settings
 from trips.models import *
 from payment.models import *
 from payment.serializers import PaymentSerializer
+from utility.util import get_bill_payment_mapping
 from wallets.models import *
 from django.views import View
 from utility.rating import get_driver_rating
@@ -630,14 +631,5 @@ class AvailablePlaceholdersView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, *args, **kwargs):
-        placeholders = {
-            "PassengerFirstName": "First name of the passenger",
-            "PassengerLastName": "Last name of the passenger",
-            "PassengerEmail": "Email of the passenger",
-            "PaymentAmount": "Amount of the payment",
-            "PaymentCurrency": "Currency of the payment",
-            "TripSource": "Source location of the trip",
-            "TripDestination": "Destination location of the trip",
-            "SupportEmail": "Support email address",
-        }
-        return Response(placeholders, status=200)
+        _, placeholders = get_bill_payment_mapping(1, get_key=True)
+        return Response((list(placeholders.keys())), status=200)

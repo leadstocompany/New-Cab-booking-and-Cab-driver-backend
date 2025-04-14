@@ -625,4 +625,19 @@ class PassengerTripPendingBilledView(APIView):
             return Response(pending_billed_data, status=status.HTTP_200_OK, hint="pending_bill")
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST, hint="no_bill")      
-                
+
+class AvailablePlaceholdersView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        placeholders = {
+            "PassengerFirstName": "First name of the passenger",
+            "PassengerLastName": "Last name of the passenger",
+            "PassengerEmail": "Email of the passenger",
+            "PaymentAmount": "Amount of the payment",
+            "PaymentCurrency": "Currency of the payment",
+            "TripSource": "Source location of the trip",
+            "TripDestination": "Destination location of the trip",
+            "SupportEmail": "Support email address",
+        }
+        return Response(placeholders, status=200)

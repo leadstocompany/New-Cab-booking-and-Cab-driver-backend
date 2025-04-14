@@ -12,6 +12,8 @@ from django.core.mail import send_mail
 from django.utils import timezone
 import logging
 
+from utility.util import get_bill_payment_mapping
+
 logger = logging.getLogger(__name__)
 
 @shared_task
@@ -95,26 +97,22 @@ def trip_payment_complete_task(payment_id):
         
     )
 
+
 from django.template import Template, Context
 
 @shared_task
 def send_payment_confirmation_email(payment_id):
-    payment = Bill_Payment.objects.get(id=payment_id)
     
-    context_data = {
-        'payment': payment,
-        "support_email": settings.DEFAULT_FROM_EMAIL
-    }
     
+    payment, placeholder_mapping= get_bill_payment_mapping(payment_id)
     try:
         template = EmailTemplate.objects.get(is_active=True)
         template_obj = Template(template.html_content)
-        context_obj = Context(context_data)
+        context_obj = Context(placeholder_mapping) 
         html_message = template_obj.render(context_obj)
         subject = template.subject
     except EmailTemplate.DoesNotExist:
-        context = context_data
-        html_message = render_to_string('emails/payment_confirmation.html', context)
+        html_message = render_to_string('emails/payment_confirmation.html', placeholder_mapping)
         subject = 'Payment Confirmation'
 
     send_mail(

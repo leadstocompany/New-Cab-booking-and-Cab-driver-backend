@@ -760,3 +760,27 @@ class AdminDashboardView(APIView):
     start_of_year = today.replace(month=1, day=1)
     this_years_income=Subscription_Logs.objects.filter(subcribe_date__date__gte=start_of_year, payment_status='PAID').aggregate(total=Sum('pay_amount'))['total'] or 0
     
+
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser, AllowAny
+from .models import EmailTemplate
+from .serializers import EmailTemplateSerializer
+from utility.pagination import CustomPagination
+
+class EmailTemplateListCreateView(generics.ListCreateAPIView):
+    queryset = EmailTemplate.objects.all()
+    serializer_class = EmailTemplateSerializer
+    permission_classes = [IsAdminUser]
+    pagination_class = CustomPagination
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class EmailTemplateRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = EmailTemplate.objects.all()
+    serializer_class = EmailTemplateSerializer
+    permission_classes = [AllowAny]  # No authentication required

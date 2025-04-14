@@ -458,3 +458,12 @@ class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = ['id', 'city_name']
+
+from rest_framework import serializers
+from .models import EmailTemplate
+
+class EmailTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailTemplate
+        fields = ['id', 'name', 'subject', 'html_content', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']

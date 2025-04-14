@@ -1,8 +1,12 @@
 from django.urls import re_path, include, path
+from rest_framework.routers import DefaultRouter
+
 
 from admin_api import views
 
 app_name = 'admin_api'
+
+
 
 urlpatterns = [
     path('login', views.AdminLoginView.as_view(),),
@@ -89,5 +93,8 @@ urlpatterns = [
     path('driver/approve/', views.ApproveDriverProfileAPIView.as_view(), name='approve-driver'),
     path('driver/reject/', views.RejectDriverProfileAPIView.as_view(), name='reject-driver'),
 
+    # email template
+    path('email-templates/', views.EmailTemplateListCreateView.as_view(), name='email-template-list-create'),
+    path('email-templates/<int:pk>/', views.EmailTemplateRetrieveUpdateDestroyView.as_view(), name='email-template-detail'),
 
 ]

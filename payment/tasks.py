@@ -2,6 +2,7 @@ from celery import shared_task
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from JLP_MyRide import settings
+from admin_api.models import EmailTemplate
 from trips.models import Trip
 from utility.rating import get_driver_rating
 from payment.models import Bill_Payment
@@ -94,22 +95,33 @@ def trip_payment_complete_task(payment_id):
         
     )
 
+from django.template import Template, Context
+
 @shared_task
 def send_payment_confirmation_email(payment_id):
     payment = Bill_Payment.objects.get(id=payment_id)
-    context = {
+    
+    context_data = {
         'payment': payment,
         "support_email": settings.DEFAULT_FROM_EMAIL
     }
-
-    html_message = render_to_string('emails/payment_confirmation.html', context)
+    
+    try:
+        template = EmailTemplate.objects.get(is_active=True)
+        template_obj = Template(template.html_content)
+        context_obj = Context(context_data)
+        html_message = template_obj.render(context_obj)
+        subject = template.subject
+    except EmailTemplate.DoesNotExist:
+        context = context_data
+        html_message = render_to_string('emails/payment_confirmation.html', context)
+        subject = 'Payment Confirmation'
 
     send_mail(
-        subject='Payment Confirmation',
-        message='',  # Plain text version
+        subject=subject,
+        message='',
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[payment.passenger.email],
         html_message=html_message,
     )
-
 

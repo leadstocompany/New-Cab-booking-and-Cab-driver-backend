@@ -16,4 +16,5 @@ urlpatterns = [
     # path('stripe-webhook/', stripe_webhook, name='stripe-webhook'),
     path('driver/incomplete-payments/', views.DriverTripIncompletePaymentsView.as_view(), name='driver-incomplete-payments'),
     path('passenger/pending-trip-bill/', views.PassengerTripPendingBilledView.as_view(), name='passenger-pending-trip-bill'),
+    path('email_template/placeholders/', views.AvailablePlaceholdersView.as_view(), name="placeholders_view"),
 ]

@@ -784,3 +784,20 @@ class EmailTemplateRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
     queryset = EmailTemplate.objects.all()
     serializer_class = EmailTemplateSerializer
     permission_classes = [AllowAny]  # No authentication required
+
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from notifications.models import NotificationTemplate
+from admin_api.serializers import NotificationTemplateSerializer
+from utility.pagination import CustomPagination
+
+class NotificationTemplateListCreateView(generics.ListCreateAPIView):
+    queryset = NotificationTemplate.objects.all().order_by('-id')
+    serializer_class = NotificationTemplateSerializer
+    permission_classes = [AllowAny]
+    pagination_class = CustomPagination
+
+class NotificationTemplateRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = NotificationTemplate.objects.all()
+    serializer_class = NotificationTemplateSerializer
+    permission_classes = [AllowAny]

@@ -23,3 +23,20 @@ class DriverNotification(CloudinaryBaseModel):
         from notifications.tasks import send_driver_notifications
 
         send_driver_notifications.delay(self.id)
+
+
+class NotificationTemplate(models.Model):
+    TYPE_CHOICES = [
+        ('email', 'Email'),
+        ('sms', 'SMS'),
+        ('push', 'Push Notification'),
+    ]
+
+    name = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=255)
+    body = models.TextField()
+    type = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name

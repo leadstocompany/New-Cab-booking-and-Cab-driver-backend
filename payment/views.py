@@ -16,6 +16,7 @@ from JLP_MyRide import settings
 from trips.models import *
 from payment.models import *
 from payment.serializers import PaymentSerializer
+from utility.util import get_bill_payment_mapping
 from wallets.models import *
 from django.views import View
 from utility.rating import get_driver_rating
@@ -625,4 +626,10 @@ class PassengerTripPendingBilledView(APIView):
             return Response(pending_billed_data, status=status.HTTP_200_OK, hint="pending_bill")
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST, hint="no_bill")      
-                
+
+class AvailablePlaceholdersView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        _, placeholders = get_bill_payment_mapping(1, get_key=True)
+        return Response((list(placeholders.keys())), status=200)

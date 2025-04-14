@@ -2,6 +2,7 @@ from datetime import datetime
 import uuid
 
 
+
 def calculate_percentage_change(old_value, new_value):
     if old_value == 0:
         return "+100" if new_value > 0 else "0"
@@ -28,3 +29,30 @@ def parse_datetime(datetime_str):
 
 def generate_six_digit_uuid():
     return str(uuid.uuid4())[:7]
+
+def get_bill_payment_mapping(payment_id, get_key = False):
+    from payment.models import Bill_Payment
+    from JLP_MyRide import settings
+
+    payment = Bill_Payment.objects.get(id=payment_id) if not get_key else Bill_Payment.objects.all().order_by("-id").first()
+    
+    placeholder_mapping = {
+        "TripID": payment.trip.id,
+        "RideStartTime": payment.trip.ride_start_time,
+        "RideEndTime": payment.trip.ride_end_time,
+        "TripAmount": payment.amount,
+        "TripDistance": payment.trip.distance,
+        "TripDuration": payment.trip.time,
+        "DriverName": payment.trip.driver.full_name,
+        "DriverPhone": payment.trip.driver.phone,
+        "DriverVehicleType": payment.trip.cab.cab_type.cab_type,
+        "DriverVehicleLicence": payment.trip.cab.number_plate,
+        "TripSource": payment.trip.source,
+        "TripDestination": payment.trip.destination,
+        "TripBillPrice": payment.trip.rent_price,
+        "TripWaitingCharge": payment.trip.waiting_charge,
+        "TripTotalAmount": payment.trip.total_fare,
+        "SupportEmail": settings.DEFAULT_FROM_EMAIL,
+    }
+
+    return payment, placeholder_mapping

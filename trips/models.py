@@ -289,5 +289,13 @@ class TripRating(BaseModel):
     def __str__(self):
         return self.trip.source
 
+
+class PickupRadius(models.Model):
+    id = models.AutoField(primary_key=True)
+    radius = models.DecimalField(max_digits=5, decimal_places=2)
+
+    def __str__(self):
+        return f"Pickup Radius: {self.radius} km"
+
 # Register signals
 # import trips.signals  # Ensure this import is at the bottom

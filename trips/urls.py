@@ -18,8 +18,8 @@ urlpatterns = [
     path('driver-complated-ride', views.CompletedRidesListView.as_view(), name='driver-completed-rides-list'),
     path('driver-scheduled-ride', views.ScheduledRideListView.as_view(), name='scheduled-trips-list'),
     path('driver-current-ride/', views.CurrentRidesListView.as_view(), name='current-trips-list'),
-    path("passenger-ride-list/", views.PassengerTripListView.as_view(), name="passenger_ride_list")
-
-
+    path("passenger-ride-list/", views.PassengerTripListView.as_view(), name="passenger_ride_list"),
+    path('pickup-radius/', views.PickupRadiusView.as_view(), name='pickup-radius'),
+    path('pickup-radius/create/', views.PickupRadiusCreateView.as_view(), name='pickup-radius-create'),
 
 ]

@@ -33,6 +33,7 @@ class NotificationTemplate(models.Model):
         ('TripAccepted', 'Trip Accepted'),
         ('TripCancelled', 'Trip Cancelled'),
         ('TripStart', 'Trip Start'),
+        ('TripScheduled', 'Trip Scheduled'),
         ('TripComplete', 'Trip Complete'),
         ('TripDriverArrived', 'Trip Driver Arrived'),
     ]

@@ -786,7 +786,7 @@ class EmailTemplateRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
     permission_classes = [AllowAny]  # No authentication required
 
 from rest_framework import generics
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import  AllowAny
 from notifications.models import NotificationTemplate
 from admin_api.serializers import NotificationTemplateSerializer
 from utility.pagination import CustomPagination
@@ -801,3 +801,8 @@ class NotificationTemplateRetrieveUpdateDestroyView(generics.RetrieveUpdateDestr
     queryset = NotificationTemplate.objects.all()
     serializer_class = NotificationTemplateSerializer
     permission_classes = [AllowAny]
+
+class NotificationTypeChoicesView(APIView):
+    def get(self, request, *args, **kwargs):
+        choices = NotificationTemplate.TYPE_CHOICES
+        return Response(choices, status=200)

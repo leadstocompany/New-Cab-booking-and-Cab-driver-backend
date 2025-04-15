@@ -27,15 +27,21 @@ class DriverNotification(CloudinaryBaseModel):
 
 class NotificationTemplate(models.Model):
     TYPE_CHOICES = [
-        ('email', 'Email'),
-        ('sms', 'SMS'),
-        ('push', 'Push Notification'),
+        ('TripBillGenerate', 'Trip Bill Generate'),
+        ('TripPaymentComplete', 'Trip Payment Complete'),
+        ('TripBookingRequest', 'Trip Booking Request'),
+        ('TripAccepted', 'Trip Accepted'),
+        ('TripCancelled', 'Trip Cancelled'),
+        ('TripStart', 'Trip Start'),
+        ('TripScheduled', 'Trip Scheduled'),
+        ('TripComplete', 'Trip Complete'),
+        ('TripDriverArrived', 'Trip Driver Arrived'),
     ]
 
     name = models.CharField(max_length=255, unique=True)
     title = models.CharField(max_length=255)
     body = models.TextField()
-    type = models.CharField(max_length=50)
+    type = models.CharField(max_length=50, choices=TYPE_CHOICES)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

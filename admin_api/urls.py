@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 
 from admin_api import views
+from admin_api.views import NotificationTypeChoicesView
 
 app_name = 'admin_api'
 
@@ -99,4 +100,6 @@ urlpatterns = [
 
     path('notification-templates/', views.NotificationTemplateListCreateView.as_view(), name='notification-template-list-create'),
     path('notification-templates/<int:pk>/', views.NotificationTemplateRetrieveUpdateDestroyView.as_view(), name='notification-template-detail'),
+
+    path('notification-types/', NotificationTypeChoicesView.as_view(), name='notification-type-choices'),
 ]

@@ -32,6 +32,12 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
         if queryset.exists():
             raise serializers.ValidationError("Email ID already used!")
         return lower_email
+    
+    def validate_birth_day(self, value):
+        if value == "":
+            return None
+        return value
+
     class Meta:
         model = Customer
         fields = ('id','first_name', 'last_name', 'phone', 'email', 'birth_day', 'gender', 'photo_upload', 'code')

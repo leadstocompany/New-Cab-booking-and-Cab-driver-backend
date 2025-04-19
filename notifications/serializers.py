@@ -19,7 +19,6 @@ class DriverNotificationSerializer(serializers.ModelSerializer):
         return representation
 
 class DriverNotificationRequestSerializer(serializers.ModelSerializer):
-    banner = serializers.FileField(required=False, allow_null=True)
     
     class Meta:
         model = DriverNotification

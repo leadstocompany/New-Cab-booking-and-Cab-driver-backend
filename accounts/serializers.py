@@ -23,6 +23,7 @@ class FileUploadSerializer(serializers.ModelSerializer):
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
+    birth_day = serializers.DateField(required=False, allow_null=True)
 
     def validate_email(self, value):
         lower_email = value.lower()
@@ -33,10 +34,10 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Email ID already used!")
         return lower_email
     
-    def validate_birth_day(self, value):
-        if value == "":
-            return None
-        return value
+    def to_internal_value(self, data):
+        if data.get("birth_day") == "":
+            data["birth_day"] = None
+        return super().to_internal_value(data)
 
     class Meta:
         model = Customer

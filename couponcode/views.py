@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class CouponListCreateView(generics.ListCreateAPIView):
-    queryset = Coupon.objects.all()
+    queryset = Coupon.objects.all().order_by('id')
     serializer_class = CouponSerializer
     permission_classes = [IsAdminOrSuperuser]
 
@@ -54,11 +54,14 @@ class CouponDestroyView(generics.DestroyAPIView):
     permission_classes = [IsAdminOrSuperuser]
     lookup_field = 'code'
 
+
+from django.utils import timezone
 class ApplyCouponAPI(APIView):
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [TokenAuthentication]
 
     def post(self, request, *args, **kwargs):
+        
         coupon_code = request.data.get('code')
         if not coupon_code:
             return Response({'valid': False, 'error': 'Coupon code is required'}, status=400)
@@ -73,7 +76,13 @@ class ApplyCouponAPI(APIView):
             return Response({'valid': False, 'error': 'You have already used this coupon code'}, status=400)
 
         elif coupon:
+            if coupon.valid_to < timezone.now():
+                return Response({'valid': False, 'error': 'Coupon code is expired'}, status=400)
+            if coupon.use_count == 0:
+                return Response({'valid': False, 'error': 'Coupon code has reached its usage limit'}, status=400)
             CouponUsage.objects.create(user=self.request.user, coupon=coupon)
+            coupon.use_count -= 1
+            coupon.save()
             return Response({'valid': True, 'discount': coupon.discount})
         else:
             return Response({'valid': False, 'error': 'Coupon code is expired'}, status=400)

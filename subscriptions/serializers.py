@@ -8,6 +8,7 @@ from trips.serializers import CabClassSerializer
 #         fields = ['id','plan_name', 'ride_numbers', 'price', 'discount', 'original_price', 'is_active', "created_at", "updated_at"]
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    is_active = serializers.BooleanField(default=True)
     class Meta:
         model = SubscriptionPlan
         fields = '__all__'

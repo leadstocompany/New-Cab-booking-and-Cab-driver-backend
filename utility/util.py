@@ -72,8 +72,8 @@ def get_notification_mapping(trip_id=None, payment_id=None, driver = None):
             "TripDistance": trip.distance,
             "TripDuration": trip.time,
             "TripAmount": trip.rent_price if trip.rent_price else get_custom_ride_amount(trip, driver),
-            "DriverName": trip.driver.full_name,
-            "DriverPhone": trip.driver.phone,
+            "DriverName": trip.driver.full_name if trip.driver else driver.full_name,
+            "DriverPhone": trip.driver.phone if trip.driver else driver.phone,
             "PassengerName": f"{trip.customer.first_name} {trip.customer.last_name}",
             "PassengerPhone": trip.customer.phone,
         }

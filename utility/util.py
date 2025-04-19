@@ -57,7 +57,7 @@ def get_bill_payment_mapping(payment_id, get_key = False):
 
     return payment, placeholder_mapping
 
-def get_notification_mapping(trip_id=None, payment_id=None, driver = None):
+def get_notification_mapping(trip_id=None, payment_id=None, driver = None, extra_mapping = None):
     from trips.models import Trip
     from payment.models import Bill_Payment
 
@@ -72,7 +72,7 @@ def get_notification_mapping(trip_id=None, payment_id=None, driver = None):
             "TripDistance": trip.distance,
             "TripDuration": trip.time,
             "TripAmount": trip.rent_price if trip.rent_price else get_custom_ride_amount(trip, driver),
-            "DriverName": trip.driver.full_name if trip.driver else driver.full_name,
+            "DriverName": f"{trip.driver.first_name} {trip.driver.last_name}" if trip.driver else f"{driver.first_name} {driver.last_name}",
             "DriverPhone": trip.driver.phone if trip.driver else driver.phone,
             "PassengerName": f"{trip.customer.first_name} {trip.customer.last_name}",
             "PassengerPhone": trip.customer.phone,
@@ -82,11 +82,10 @@ def get_notification_mapping(trip_id=None, payment_id=None, driver = None):
         payment = Bill_Payment.objects.get(id=payment_id)
         mapping.update({
             "PaymentAmount": payment.amount,
-            "PaymentCurrency": payment.currency,
-            "PaymentStatus": payment.payment_status,
+            "PaymentType": payment.payment_type,
         })
 
-    return mapping
+    return mapping if extra_mapping is None else {**mapping, **extra_mapping}
 
 
 def get_custom_ride_amount(trip, driver):

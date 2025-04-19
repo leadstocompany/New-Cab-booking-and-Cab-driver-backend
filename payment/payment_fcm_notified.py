@@ -10,7 +10,11 @@ logger = logging.getLogger(__name__)
 def fcm_push_notification_trip_bill_generate(trip_id):
     trip = Trip.objects.get(id=trip_id)
     try:
-        mapping = get_notification_mapping(trip_id=trip_id)
+        extra_mapping = {
+            "PaymentAmount": trip.total_fare,
+            "PaymentType": trip.payment_type,
+        }
+        mapping = get_notification_mapping(trip_id=trip_id, extra_mapping=extra_mapping)
         title, body = render_notification_template('TripBillGenerate', mapping)
         if title and body:
             response_data = send_fcm_notification(trip.customer.fcm_token, title, body)
@@ -20,7 +24,7 @@ def fcm_push_notification_trip_bill_generate(trip_id):
 
 def fcm_push_notification_trip_payment_complete(payment_id):
     payment = Bill_Payment.objects.get(id=payment_id)
-    mapping = get_notification_mapping(payment_id=payment_id)
+    mapping = get_notification_mapping(trip_id=payment.trip.id, payment_id=payment_id)
 
     try:
         title, body = render_notification_template('TripPaymentComplete', mapping)

@@ -22,7 +22,7 @@ def fcm_push_notification_trip_booking_request_to_drivers(trip_id, drivers, sche
 
         for driver in drivers:
             try:
-                mapping = get_notification_mapping(trip_id=trip_id, driver=driver)
+                mapping = get_notification_mapping(trip_id=trip_id, driver=driver, extra_mapping={"PaymentAmount": trip.rent_price})
                 title, body = render_notification_template('TripBookingRequest', mapping)
                 if title and body:
                     response_data = send_fcm_notification(driver.fcm_token, title, body)
@@ -36,7 +36,7 @@ def fcm_push_notification_trip_booking_request_to_drivers(trip_id, drivers, sche
 def fcm_push_notification_trip_accepted(trip_id):
     trip = Trip.objects.get(id=trip_id)
     try:
-        mapping = get_notification_mapping(trip_id=trip_id)
+        mapping = get_notification_mapping(trip_id=trip_id, extra_mapping={"PaymentAmount": trip.rent_price})
         title, body = render_notification_template('TripAccepted', mapping)
         if title and body:
             response_data = send_fcm_notification(trip.customer.fcm_token, title, body)
@@ -47,7 +47,7 @@ def fcm_push_notification_trip_accepted(trip_id):
 
 def fcm_push_notification_trip_cancelled(trip_id, user_type, cancel_reason):
     trip = Trip.objects.get(id=trip_id)
-    mapping = get_notification_mapping(trip_id=trip_id)
+    mapping = get_notification_mapping(trip_id=trip_id, extra_mapping={"PaymentAmount": trip.rent_price})
     mapping['CancelReason'] = cancel_reason
 
     if user_type == 'driver':
@@ -71,7 +71,7 @@ def fcm_push_notification_trip_cancelled(trip_id, user_type, cancel_reason):
 def fcm_push_notification_trip_started(trip_id):
     trip = Trip.objects.get(id=trip_id)
     try:
-        mapping = get_notification_mapping(trip_id=trip_id)
+        mapping = get_notification_mapping(trip_id=trip_id, extra_mapping={"PaymentAmount": trip.rent_price})
         title, body = render_notification_template('TripStart', mapping)
         if title and body:
             response_data = send_fcm_notification(trip.customer.fcm_token, title, body)
@@ -84,7 +84,7 @@ def fcm_push_notification_trip_completed(trip_id, customer_id, driver_id):
     customer = User.objects.get(id=customer_id)
     driver = User.objects.get(id=driver_id)
     trip = Trip.objects.get(id=trip_id)
-    mapping = get_notification_mapping(trip_id=trip_id)
+    mapping = get_notification_mapping(trip_id=trip_id, extra_mapping={"PaymentAmount": trip.rent_price})
 
     try:
         title, body = render_notification_template('TripComplete', mapping)
@@ -107,7 +107,7 @@ def fcm_push_notification_arrived_at_pickup(trip_id, customer_id, driver_id):
     customer = User.objects.get(id=customer_id)
     driver = User.objects.get(id=driver_id)
     trip = Trip.objects.get(id=trip_id)
-    mapping = get_notification_mapping(trip_id=trip_id)
+    mapping = get_notification_mapping(trip_id=trip_id, extra_mapping={"PaymentAmount": trip.rent_price})
 
     try:
         title, body = render_notification_template('TripDriverArrived', mapping)
@@ -124,7 +124,7 @@ def send_fcm_notification_schedule(trip_id):
 
     if trip.scheduled_datetime and timezone.now() <= trip.scheduled_datetime - timedelta(hours=1):
         schedule_time = trip.scheduled_datetime - timedelta(hours=1)
-        mapping = get_notification_mapping(trip_id=trip_id)
+        mapping = get_notification_mapping(trip_id=trip_id, extra_mapping={"PaymentAmount": trip.rent_price})
 
         # Render title and body using the active notification template
         title, body = render_notification_template('TripScheduled', mapping)

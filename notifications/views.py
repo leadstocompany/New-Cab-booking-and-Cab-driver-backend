@@ -93,7 +93,6 @@ class NotificationMappingKeysView(APIView):
             "PassengerName": "Name of the passenger",
             "PassengerPhone": "Phone number of the passenger",
             "PaymentAmount": "Amount of the payment",
-            "PaymentCurrency": "Currency of the payment",
-            "PaymentStatus": "Status of the payment",
+            "PaymentType": "Type of payment (e.g., cash, wallet)",
         }
         return Response(list(mapping_keys.keys()), status=200)

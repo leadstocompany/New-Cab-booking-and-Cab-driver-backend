@@ -431,7 +431,7 @@ class PassengerTripListView(APIView):
         schedule_ride = Trip.objects.filter(
             customer=self.request.user,
             scheduled_datetime__isnull=False,
-            scheduled_datetime__le=timezone.localtime()
+            scheduled_datetime__lte=timezone.localtime()
         ).exclude(status__in=['ACCEPTED', 'REJECTED', 'CANCELLED', 'ON_TRIP', '']).order_by('-created_at')
         # Serialize the filtered trips
         schedule_ride_serializer = TripSerializer(schedule_ride, many=True)

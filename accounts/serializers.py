@@ -16,7 +16,7 @@ class UserAuthSerializer(serializers.Serializer):
         data["user"] = user
         return data
 class FileUploadSerializer(serializers.ModelSerializer):
-    
+    file = serializers.FileField(required=True)
     class Meta:
         model = FileUpload
         fields = ['file', 'phone']

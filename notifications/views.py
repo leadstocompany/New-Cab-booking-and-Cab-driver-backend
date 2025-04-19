@@ -21,9 +21,6 @@ class DriverNotificationCreateView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        if "banner" in request.FILES:
-            data["banner"] = request.FILES["banner"]
-
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         notification = serializer.save()

@@ -94,6 +94,10 @@ def get_custom_ride_amount(trip, driver):
         vehicle = Vehicle.objects.get(driver_id=driver.id)
         cabclass_value = CabBookingPrice.objects.get(cab_class_id=vehicle.cab_class.id)
         cab_custom_price = cabclass_value.base_fare * trip.distance
+        if trip.coupon_code:
+            from couponcode.models import Coupon
+            coupon = Coupon.objects.get(code=trip.coupon_code)
+            cab_custom_price -= cab_custom_price * (coupon.discount / 100)
         return cab_custom_price
 
 from django.template import Template, Context

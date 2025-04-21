@@ -130,8 +130,8 @@ class BookingRequestView(APIView):
             dropup_longitude= dropup_longitude,
             scheduled_datetime=scheduled_datetime,
             payment_type=payment_type,
-            distance=distance
-            coupon_code=coupon_code
+            distance=distance,
+            coupon_code=coupon_code if coupon_code is not None or coupon_code !="" else None
         )
         print("trip")
         print(trip.created_at)

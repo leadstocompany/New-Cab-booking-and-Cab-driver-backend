@@ -60,6 +60,7 @@ class Trip(BaseModel):
     driver_arrived_at_pickup_time=models.DateTimeField(null=True, blank=True)
     ride_start_time=models.DateTimeField(null=True, blank=True)
     ride_end_time=models.DateTimeField(null=True, blank=True)
+    coupon_code = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return str(self.source)

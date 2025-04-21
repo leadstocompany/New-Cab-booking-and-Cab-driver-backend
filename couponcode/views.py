@@ -80,9 +80,9 @@ class ApplyCouponAPI(APIView):
                 return Response({'valid': False, 'error': 'Coupon code is expired'}, status=400)
             if coupon.use_count == 0:
                 return Response({'valid': False, 'error': 'Coupon code has reached its usage limit'}, status=400)
-            CouponUsage.objects.create(user=self.request.user, coupon=coupon)
-            coupon.use_count -= 1
-            coupon.save()
+            # CouponUsage.objects.create(user=self.request.user, coupon=coupon)
+            # coupon.use_count -= 1
+            # coupon.save()
             return Response({'valid': True, 'discount': coupon.discount})
         else:
             return Response({'valid': False, 'error': 'Coupon code is expired'}, status=400)

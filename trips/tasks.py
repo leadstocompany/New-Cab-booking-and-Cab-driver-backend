@@ -92,6 +92,10 @@ def booking_request_notify_drivers(trip_id,driver_ids, scheduled_datetime):
                 cabclass_value = CabBookingPrice.objects.get(cab_class=vehicle.cab_class)
                 cab_custom_price = cabclass_value.base_fare * trip.distance
                 cab_class_custom = vehicle.cab_class.cab_class
+                if trip.coupon_code:
+                    from couponcode.models import Coupon
+                    coupon = Coupon.objects.get(code=trip.coupon_code)
+                    cab_custom_price -= cab_custom_price * (coupon.discount / 100)
             booking_request_notify_driver(driver, trip, scheduled_datetime, cab_custom_price, cab_class_custom)
     except Exception as e:
         logger.error(f"Celery Error occurred: {e}")

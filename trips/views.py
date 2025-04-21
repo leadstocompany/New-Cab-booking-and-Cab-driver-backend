@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.db.models import Q
 import math
 from django.core.exceptions import ObjectDoesNotExist
+from couponcode.models import Coupon, CouponUsage
 from trips.models import *
 from trips.serializers import *
 from admin_api.serializers import FeedbackSettingSerializer, DriverFeedbackPageSerializer
@@ -106,6 +107,7 @@ class BookingRequestView(APIView):
         payment_type= request.data.get('payment_type')
         distance=request.data.get('distance')
         otp = str(random.randint(1000, 9999))
+        coupon_code = request.data.get('coupon_code', None)
 
         
         if payment_type.lower() == 'wallet':
@@ -129,6 +131,7 @@ class BookingRequestView(APIView):
             scheduled_datetime=scheduled_datetime,
             payment_type=payment_type,
             distance=distance
+            coupon_code=coupon_code
         )
         print("trip")
         print(trip.created_at)
@@ -180,6 +183,11 @@ class AcceptTripView(APIView):
         if trip.rent_price is None or trip.rent_price <= 0:
             cab_price = CabBookingPrice.objects.get(cab_class_id=ride_type_id)
             trip.rent_price = cab_price.base_fare * trip.distance
+        if trip.coupon_code:
+            coupon = Coupon.objects.get(code=trip.coupon_code)
+            CouponUsage.objects.create(user=trip.customer, coupon=coupon)
+            coupon.use_count -= 1
+            coupon.save()
         trip.status = 'BOOKED'
         trip.save()
         fcm_push_notification_trip_accepted(trip_id)

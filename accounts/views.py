@@ -138,7 +138,6 @@ class CustomerRegisterAPI(views.APIView):
             customer = Customer.objects.create(
                 phone=phone, code=create_ref_code())
 
-            CustomerPhoneVerify.objects.get_or_create(user=customer)
             if phone and referrer:
                 if not Customer.objects.filter(code=referrer).exists():
                     return Response(data={"status": False, 'data': "referrel code donesn't exist"}, status=status.HTTP_400_BAD_REQUEST)
@@ -148,8 +147,15 @@ class CustomerRegisterAPI(views.APIView):
                     referred=referred, referrer=customer)
                 print(customer_ref)
 
+            CustomerPhoneVerify.objects.create(user=customer)
+            # customer verify count
+            customer_verify_count = 0
+            try:
+                customer_verify_count = CustomerPhoneVerify.objects.filter(user=customer).count()
+            except Exception:
+                customer_verify_count = 0
             hotp = pyotp.HOTP(customer.hash(), 4)
-            send_otp(hotp.at(customer.customerphoneverify.count), customer.phone)
+            send_otp(hotp.at(customer_verify_count), customer.phone)
             return Response(data={"status": True}, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(f"Error occurred: {e}")
@@ -165,7 +171,11 @@ class LoginCustomerwithPhoneNumberApi(views.APIView):
                 if not User.objects.filter(phone=phone).exists():
                     customer = Customer.objects.create(phone=phone, code=create_ref_code())
                     hotp = pyotp.HOTP(customer.hash(), 4)
-                    customerphoneverify = customer.customerphoneverify
+                    try:
+                        customerphoneverify = customer.customerphoneverify
+                    except:
+                        customerphoneverify = CustomerPhoneVerify.objects.create(user=customer)
+                    # customerphoneverify = customer.customerphoneverify
                     send_otp(hotp.at(customerphoneverify.count), customer.phone)
                     return Response(data={"status": True, "phone":customer.phone}, status=status.HTTP_201_CREATED)
                     # return Response(data={"status": False, 'data': "User not exist"}, status=status.HTTP_400_BAD_REQUEST)

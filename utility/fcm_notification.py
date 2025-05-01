@@ -23,16 +23,27 @@ def send_fcm_notification(fcm_token, title, body):
 def send_rich_fcm_notification(
     fcm_token, title, message, banner=None, url=None, type="admin_notification"
 ):
-    """Send FCM notification with banner image and URL redirection"""
+    """
+    Send a rich FCM notification with an optional image and URL.
+    """
 
-    notification = messaging.Notification(title=title, body=message, image=banner)
+    notification = messaging.Notification(
+        title=title, body=message, image=banner if banner else None
+    )
 
     data = {
-        "click_action": "FLUTTER_NOTIFICATION_CLICK",
-        "url": url if url else "",
+        "click_action": "FLUTTER_NOTIFICATION_CLICK",  # Needed for Flutter click
+        "url": url or "",
         "type": type,
+        "title": title,
+        "body": message,
+        "image": banner or "",
     }
 
-    message = messaging.Message(notification=notification, data=data, token=fcm_token)
+    message = messaging.Message(
+        notification=notification,
+        data=data,
+        token=fcm_token,
+    )
 
     return messaging.send(message)

@@ -22,11 +22,12 @@ def fcm_push_notification_trip_booking_request_to_drivers(trip_id, drivers, sche
 
         for driver in drivers:
             try:
-                mapping = get_notification_mapping(trip_id=trip_id, driver=driver, extra_mapping={"PaymentAmount": trip.rent_price})
-                title, body = render_notification_template('TripBookingRequest', mapping)
-                if title and body:
-                    response_data = send_fcm_notification(driver.fcm_token, title, body)
-                    logger.info(f"FCM notification Processing data {trip.id}: {response_data}")
+                if driver.driver_duty:
+                    mapping = get_notification_mapping(trip_id=trip_id, driver=driver, extra_mapping={"PaymentAmount": trip.rent_price})
+                    title, body = render_notification_template('TripBookingRequest', mapping)
+                    if title and body:
+                        response_data = send_fcm_notification(driver.fcm_token, title, body)
+                        logger.info(f"FCM notification Processing data {trip.id}: {response_data}")
             except Exception as e:
                 logger.error(f"Error occurred in sending FCM notification for trip request {trip.id}: {e}")
     except Exception as e:

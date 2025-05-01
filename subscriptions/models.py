@@ -57,9 +57,6 @@ class Subscriptions(models.Model):
     is_active = models.BooleanField(default=True)
     objects = models.Manager()
 
-    def __str__(self):
-        return f"{self.driver.phone} - {self.plan.plan_name}"
-
     class Meta:
         db_table = 'subscriptions'
 

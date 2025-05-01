@@ -71,7 +71,8 @@ def get_all_available_drivers(return_object=False):
         active_trip_statuses = ['ACCEPTED', 'BOOKED', 'ON_TRIP']
         available_drivers = User.objects.filter(
             type=User.Types.DRIVER, 
-            driver_duty=True
+            driver_duty=True,
+            profile_status="Approve",
         ).exclude(
             Q(driver_trips__status__in=active_trip_statuses)
         ).distinct()

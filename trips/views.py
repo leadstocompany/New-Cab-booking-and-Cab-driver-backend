@@ -43,15 +43,16 @@ class TripRatingAPI(generics.ListCreateAPIView):
             trip = Trip.objects.get(id=request.data.get('trip_id'))
             
             # Get IDs from request or fallback to defaults
-            driver_id = request.data.get('driver_id') or trip.driver.id
-            customer_id = request.data.get('customer_id') or request.user.id
+            driver_id = trip.driver.id
+            customer_id = request.user.id
 
             data = {
-                'trip_id': trip.id,
-                'driver_id': driver_id,
-                'customer_id': customer_id,
-                'rating': request.data.get('rating'),
-                'review': request.data.get('review', '')
+                'trip': trip.id,
+                'driver': driver_id,
+                'customer': customer_id,
+                'star': request.data.get('star'),
+                'feedback': request.data.get('feedback', ''),
+                'feedbacksetting': request.data.get('feedbacksetting', '')
             }
 
             serializer = self.get_serializer(data=data)

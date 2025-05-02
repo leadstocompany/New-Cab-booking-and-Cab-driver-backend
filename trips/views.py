@@ -116,7 +116,7 @@ class BookingRequestView(APIView):
             if not trip_rent_price  and not ride_type_id:
                 all_ride_type_prices = CabBookingPrice.objects.all()
                 for ride_type_ in all_ride_type_prices: 
-                    trip_base_fare_ = ride_type_.base_fare * distance
+                    trip_base_fare_ = float(ride_type_.base_fare) * distance
                     if wallet_data.balance < trip_base_fare_:
                         return Response({"detail": "Insufficient balance. Atleast "+str(trip_base_fare_)+" required"}, status=status.HTTP_400_BAD_REQUEST)
             else:

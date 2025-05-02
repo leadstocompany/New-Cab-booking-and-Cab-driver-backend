@@ -116,8 +116,9 @@ class BookingRequestView(APIView):
             if not trip_rent_price  and not ride_type_id:
                 all_ride_type_prices = CabBookingPrice.objects.all()
                 for ride_type_ in all_ride_type_prices: 
-                    if wallet_data.balance < ride_type_.base_fare:
-                        return Response({"detail": "Insufficient balance. Atleast "+str(ride_type_.base_fare)+" required"}, status=status.HTTP_400_BAD_REQUEST)
+                    trip_base_fare_ = ride_type_.base_fare * distance
+                    if wallet_data.balance < trip_base_fare_:
+                        return Response({"detail": "Insufficient balance. Atleast "+str(trip_base_fare_)+" required"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 if wallet_data.balance < trip_rent_price:
                     return Response({"detail": "Insufficient balance. Atleast "+str(trip_rent_price)+" required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -194,6 +195,8 @@ class AcceptTripView(APIView):
             coupon = Coupon.objects.get(code=trip.coupon_code)
             CouponUsage.objects.create(user=trip.customer, coupon=coupon)
             coupon.use_count -= 1
+            discount_price = (trip.rent_price * coupon.discount) / 100
+            trip.rent_price = trip.rent_price - discount_price
             coupon.save()
         trip.status = 'BOOKED'
         trip.save()

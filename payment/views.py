@@ -271,7 +271,11 @@ class WalletPaymentView(APIView):
         else:
 
             # wallet.balance =  wallet.balance - float(amount)
+            print(Decimal(str(amount)))
+            print(amount)
+            print(f"Before {wallet.balance}")
             wallet.balance -=  Decimal(str(amount))
+            print(f"After {wallet.balance}")
             wallet.save()
 
             payment = Bill_Payment.objects.create(
@@ -283,6 +287,8 @@ class WalletPaymentView(APIView):
                 payment_status='PAID',
                 payment_type='Wallet'
             )
+            print("Payment created successfully")
+            print(payment.amount)
             Transaction.objects.create(
                     user=driver,
                     receiver=driver,
@@ -292,6 +298,8 @@ class WalletPaymentView(APIView):
                     transaction_mode="WALLETS",
                     remark=f'Receive Payment for a Ride Trip from {trip.source} to {trip.destination}'
                 )
+            print("Transaction created successfully")
+            print(amount)
             Transaction.objects.create(
                     user=customer,
                     receiver=driver,
@@ -301,8 +309,13 @@ class WalletPaymentView(APIView):
                     transaction_mode="WALLETS",
                     remark=f'Expense wallet money for a Ride booking  from {trip.source} to {trip.destination}'
                 )
+            print("2 nd Transaction created successfully")
+            print(amount)
             driver_wallet=Wallet.objects.get(user=driver)
+            print(driver_wallet.balance)
             driver_wallet.balance += Decimal(str(amount))
+            print(driver_wallet.balance)
+            print("Driver wallet balance updated successfully")
             driver_wallet.save()
             trip.payment_status = 'paid'
             trip.status = 'COMPLETED'

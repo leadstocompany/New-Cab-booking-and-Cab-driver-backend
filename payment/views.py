@@ -417,7 +417,7 @@ class UpdateTripPaymentSuccessView(APIView):
             payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
             if payment_intent['status'] == 'succeeded':
 
-                return self.update_records(payment_intent_id, payment_intent['amount'])
+                return self.update_records(payment_intent_id, payment_intent['amount']/100)
             else:
                 return Response({'error': 'Payment intent not succeeded'}, status=status.HTTP_400_BAD_REQUEST)
         except stripe.error.StripeError as e:
@@ -429,7 +429,7 @@ class UpdateTripPaymentSuccessView(APIView):
             # Retrieve Checkout Session from Stripe
             session = stripe.checkout.Session.retrieve(checkout_session_id)
             if session['payment_status'] == 'paid':
-                return self.update_records(session['id'], session['amount_total'])
+                return self.update_records(session['id'], session['amount_total']/100)
             else:
                 return Response({'error': 'Checkout session not paid'}, status=status.HTTP_400_BAD_REQUEST)
         except stripe.error.StripeError as e:

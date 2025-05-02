@@ -84,6 +84,8 @@ def get_notification_mapping(trip_id=None, payment_id=None, driver = None, extra
             "PaymentAmount": payment.amount,
             "PaymentType": payment.payment_type,
         })
+    if extra_mapping and trip.rent_price is None:
+        extra_mapping['PaymentAmount'] = mapping['TripAmount']
 
     return mapping if extra_mapping is None else {**mapping, **extra_mapping}
 

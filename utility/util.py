@@ -1,6 +1,8 @@
 from datetime import datetime
 import uuid
 
+from admin_api.models import EmailTemplate
+
 
 
 def calculate_percentage_change(old_value, new_value):
@@ -118,3 +120,26 @@ def render_notification_template(notification_type, mapping):
         return rendered_title, rendered_body
     except NotificationTemplate.DoesNotExist:
         return None, None
+    
+
+from django.core.mail import send_mail
+from JLP_MyRide import settings
+def send_dynamic_email(email_type, recipient_email, context_data):
+    subject, content = EmailTemplate.render_template(email_type, context_data)
+    
+    if not subject or not content:
+        return False
+    
+    try:
+        send_mail(
+            subject=subject,
+            message="",  # Plain text version (empty)
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient_email],
+            html_message=content,
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False

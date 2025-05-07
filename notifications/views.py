@@ -72,7 +72,7 @@ class DriverNotificationDeleteView(generics.DestroyAPIView):
 
 class AllDriverNotificationView(generics.ListAPIView):
     serializer_class = DriverNotificationSerializer
-    parser_classes = [permissions.IsAuthenticated]
+    # parser_classes = [permissions.IsAuthenticated]
     queryset = DriverNotification.objects.all()
 
 

@@ -97,6 +97,8 @@ urlpatterns = [
     # email template
     path('email-templates/', views.EmailTemplateListCreateView.as_view(), name='email-template-list-create'),
     path('email-templates/<int:pk>/', views.EmailTemplateRetrieveUpdateDestroyView.as_view(), name='email-template-detail'),
+    path('email-template/<str:email_type>/placeholders/', views.EmailTemplatePlaceholdersView.as_view(), name='email-template-placeholders'),
+
 
     path('notification-templates/', views.NotificationTemplateListCreateView.as_view(), name='notification-template-list-create'),
     path('notification-templates/<int:pk>/', views.NotificationTemplateRetrieveUpdateDestroyView.as_view(), name='notification-template-detail'),

@@ -64,10 +64,6 @@ def trip_payment_complete_task(payment_id):
             "trip_id":str(payment.trip.id),
             "source":payment.trip.source,
             "destination":payment.trip.destination,
-            "pickup_latitude": payment.trip.pickup_latitude,
-            "pickup_longitude": payment.trip.pickup_longitude,
-            "drop_latitude":payment.trip.drop_latitude,
-            "drop_longitude":payment.trip.drop_longitude,
             "driver_id":str(payment.driver.id),
             "driver_name":payment.driver.first_name + " " + payment.driver.last_name,
             "driver_phone":payment.driver.phone,
@@ -90,10 +86,6 @@ def trip_payment_complete_task(payment_id):
             "trip_id":str(payment.trip.id),
             "source":payment.trip.source,
             "destination":payment.trip.destination,
-            "pickup_latitude": payment.trip.pickup_latitude,
-            "pickup_longitude": payment.trip.pickup_longitude,
-            "drop_latitude":payment.trip.drop_latitude,
-            "drop_longitude":payment.trip.drop_longitude,
             "passenger_id":str(payment.passenger.id),
             "passenger_name":payment.passenger.first_name + " " + payment.passenger.last_name,
             "passenger_phone":payment.passenger.phone,
@@ -111,27 +103,11 @@ def trip_payment_complete_task(payment_id):
 
 
 from django.template import Template, Context
+from utility.util import send_dynamic_email
+
 
 @shared_task
 def send_payment_confirmation_email(payment_id):
-    
-    
-    payment, placeholder_mapping= get_bill_payment_mapping(payment_id)
-    try:
-        template = EmailTemplate.objects.get(is_active=True)
-        template_obj = Template(template.html_content)
-        context_obj = Context(placeholder_mapping) 
-        html_message = template_obj.render(context_obj)
-        subject = template.subject
-    except EmailTemplate.DoesNotExist:
-        html_message = render_to_string('emails/payment_confirmation.html', placeholder_mapping)
-        subject = 'Payment Confirmation'
 
-    send_mail(
-        subject=subject,
-        message='',
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[payment.passenger.email],
-        html_message=html_message,
-    )
-
+    payment, placeholder_mapping = get_bill_payment_mapping(payment_id)
+    send_dynamic_email("TripBillGenerate", payment.passenger.email, placeholder_mapping)

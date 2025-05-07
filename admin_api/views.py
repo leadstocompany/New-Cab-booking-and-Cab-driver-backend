@@ -37,6 +37,7 @@ from accounts.serializers import DriverProfileSerializer, CustomerProfileSeriali
 from trips.serializers import TripSerializer, TripRatingSerializer
 from trips.models import TripRating
 from payment.models import Bill_Payment
+from utility.util import send_dynamic_email
 from wallets.models import *
 from rest_framework.exceptions import NotFound
 from django.db.models import ProtectedError
@@ -711,6 +712,13 @@ class ApproveDriverProfileAPIView(APIView):
             vehicle = Vehicle.objects.filter(driver=driver).first()
             vehicle.is_approved=True
             vehicle.save()
+        
+        if driver.email:
+            context_data_ = {
+                "DriverName": driver.first_name + " " + driver.last_name,
+                "DriverPhone": driver.phone,
+            }
+            send_dynamic_email("AccountActivation", driver.email, context_data_)
 
         return Response({"detail": "Driver profile approve successfully."}, status=status.HTTP_200_OK)
 
@@ -736,6 +744,13 @@ class RejectDriverProfileAPIView(APIView):
             vehicle = Vehicle.objects.filter(driver=driver).first()
             vehicle.is_approved=False
             vehicle.save()
+
+        if driver.email:
+            context_data_ = {
+                "DriverName": driver.first_name + " " + driver.last_name,
+                "DriverPhone": driver.phone,
+            }
+            send_dynamic_email("AccountDeactivation", driver.email, context_data_)
       
 
         return Response({"detail": "Driver profile reject successfully."}, status=status.HTTP_200_OK)
@@ -806,3 +821,46 @@ class NotificationTypeChoicesView(APIView):
     def get(self, request, *args, **kwargs):
         choices = NotificationTemplate.TYPE_CHOICES
         return Response(choices, status=200)
+
+
+class EmailTemplatePlaceholdersView(APIView):
+    """
+    API view to get available placeholders for different email template types
+    """
+    def get(self, request, email_type=None):
+        if not email_type:
+            return Response({"error": "Email type is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        placeholders = {}
+
+        if email_type == "TripBillGenerate":
+            placeholders = {
+                "TripID": "Trip ID",
+                "RideStartTime": "Time when the ride started",
+                "RideEndTime": "Time when the ride ended",
+                "TripAmount": "Amount paid for the trip",
+                "TripDistance": "Distance of the trip",
+                "TripDuration": "Duration of the trip",
+                "DriverName": "Full name of the driver",
+                "DriverPhone": "Phone number of the driver",
+                "DriverVehicleType": "Type of vehicle used",
+                "DriverVehicleLicence": "License plate number of the vehicle",
+                "TripSource": "Starting location of the trip",
+                "TripDestination": "Destination of the trip",
+                "TripBillPrice": "Base price of the trip",
+                "TripWaitingCharge": "Additional charges for waiting time",
+                "TripTotalAmount": "Total fare including all charges",
+                "SupportEmail": "Support email address"
+            }
+        elif email_type in ["AccountActivation", "AccountDeactivation"]:
+            placeholders = {
+                "DriverName": "Full name of the driver",
+                "DriverPhone": "Phone number of the driver"
+            }
+        else:
+            return Response({"error": "Invalid email type"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            "email_type": email_type,
+            "placeholders": placeholders
+        })

@@ -467,7 +467,7 @@ class UpdateTripPaymentSuccessView(APIView):
                 remark=f'Expense money for a Ride Trip from {trip.source} to {trip.destination} throught of stripe payment'
             )
             driver_wallet = Wallet.objects.filter(user=trip.driver).first()
-            driver_wallet.balance += amount
+            driver_wallet.balance += Decimal(str(amount))
             driver_wallet.save()
             fcm_push_notification_trip_payment_complete(payment.id)
             send_payment_confirmation_email.delay(payment.id)

@@ -39,22 +39,23 @@ def get_nearest_driver_list(trip_id, latitude, longitude):
 
         for driver in drivers_without_active_trips:
             try:
-                subscription = Subscriptions.objects.filter(driver=driver, is_active=True, payment_status="PAID").first()
-                # if subscription and subscription.pending_rides > 0:
-                if subscription:
-                    
-                    if not subscription.is_expired():
-                        location = driver.currentlocation
-                        distance = haversine(float(latitude), float(longitude), float(location.current_latitude), float(location.current_longitude))
-                        if distance <= max_distance:
-                            # Check if the driver has any unpaid completed trips
-                            has_unpaid_trips = Trip.objects.filter(
-                                driver=driver,
-                                status='COMPLETED',
-                                payment_status__isnull=True  # Unpaid trips have empty payment_status
-                            ).exists()
-                            if not has_unpaid_trips:
-                                nearby_drivers.append(driver)              
+                if driver.profile_status not in ["Block", "Rejected"]:
+                    subscription = Subscriptions.objects.filter(driver=driver, is_active=True, payment_status="PAID").first()
+                    # if subscription and subscription.pending_rides > 0:
+                    if subscription:
+                        
+                        if not subscription.is_expired():
+                            location = driver.currentlocation
+                            distance = haversine(float(latitude), float(longitude), float(location.current_latitude), float(location.current_longitude))
+                            if distance <= max_distance:
+                                # Check if the driver has any unpaid completed trips
+                                has_unpaid_trips = Trip.objects.filter(
+                                    driver=driver,
+                                    status='COMPLETED',
+                                    payment_status__isnull=True  # Unpaid trips have empty payment_status
+                                ).exists()
+                                if not has_unpaid_trips:
+                                    nearby_drivers.append(driver)              
             except CurrentLocation.DoesNotExist as e:
                 logger.error(f"Error occurred: {e}")
                 continue

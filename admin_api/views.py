@@ -661,6 +661,13 @@ class BlockDriverProfileAPIView(APIView):
             vehicle.is_approved=False
             vehicle.save()
 
+        if driver.email:
+            context_data_ = {
+                "DriverName": driver.first_name + " " + driver.last_name,
+                "DriverPhone": driver.phone,
+            }
+            send_dynamic_email("AccountBlock", driver.email, context_data_)
+
         return Response({"detail": "Driver profile blocked successfully."}, status=status.HTTP_200_OK)
 
 
@@ -687,6 +694,13 @@ class UnBlockDriverProfileAPIView(APIView):
             vehicle = Vehicle.objects.filter(driver=driver).first()
             vehicle.is_approved=True
             vehicle.save()
+
+        if driver.email:
+            context_data_ = {
+                "DriverName": driver.first_name + " " + driver.last_name,
+                "DriverPhone": driver.phone,
+            }
+            send_dynamic_email("AccountUnBlock", driver.email, context_data_)
 
         return Response({"detail": "Driver profile Unblocked successfully."}, status=status.HTTP_200_OK)
 
@@ -750,7 +764,7 @@ class RejectDriverProfileAPIView(APIView):
                 "DriverName": driver.first_name + " " + driver.last_name,
                 "DriverPhone": driver.phone,
             }
-            send_dynamic_email("AccountDeactivation", driver.email, context_data_)
+            send_dynamic_email("AccountReject", driver.email, context_data_)
       
 
         return Response({"detail": "Driver profile reject successfully."}, status=status.HTTP_200_OK)
@@ -852,7 +866,7 @@ class EmailTemplatePlaceholdersView(APIView):
                 "TripTotalAmount": "Total fare including all charges",
                 "SupportEmail": "Support email address"
             }
-        elif email_type in ["AccountActivation", "AccountDeactivation"]:
+        elif email_type in ["AccountActivation", "AccountReject", "AccountBlock", "AccountUnBlock"]:
             placeholders = {
                 "DriverName": "Full name of the driver",
                 "DriverPhone": "Phone number of the driver"

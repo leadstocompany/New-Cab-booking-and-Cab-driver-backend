@@ -465,7 +465,7 @@ from .models import EmailTemplate
 class EmailTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailTemplate
-        fields = ['id', 'name', 'subject', 'html_content', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'subject', 'html_content','type', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
 from rest_framework import serializers

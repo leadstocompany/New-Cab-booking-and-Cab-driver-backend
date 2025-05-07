@@ -59,11 +59,13 @@ class EmailTemplate(models.Model):
     EMAIL_TYPES = (
         ("TripBillGenerate", "Generate Tripm Bill"),
         ("AccountActivation", "Activate Account"),
-        ("AccountDeactivation", "Deactivate Account"),
+        ("AccountReject", "Deactivate Account"),
+        ("AccountBlock", "Block Account"),
+        ("AccountUnBlock", "UnBlock Account"),
     )
     name = models.CharField(max_length=100, unique=True)
     subject = models.CharField(max_length=255)
-    type = models.CharField(max_length=50, choices=EMAIL_TYPES)
+    type = models.CharField(max_length=50, choices=EMAIL_TYPES, default="TripBillGenerate")
     html_content = models.TextField()
     is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -78,14 +80,16 @@ class EmailTemplate(models.Model):
     
     def save(self, *args, **kwargs):
         # If this template is being set as active, deactivate all other templates with the same type
-        TYPES_ = ["TripBillGenerate", "AccountActivation", "AccountDeactivation"]
+        TYPES_ = ["TripBillGenerate", "AccountActivation", "AccountReject", "AccountBlock", "AccountUnBlock"]
         EXCLUDE_TYPES_ = []
         for type_ in TYPES_:
             if self.type != type_:
                 EXCLUDE_TYPES_.append(type_)
 
         if self.is_active:
-            EmailTemplate.objects.filter(type=self.type, is_active=True).exclude(id=self.id, type__in=EXCLUDE_TYPES_).update(is_active=False)
+            EmailTemplate.objects.filter(type=self.type, is_active=True).update(is_active=False)
+            self.is_active = True
+
         super().save(*args, **kwargs)
     
     @classmethod

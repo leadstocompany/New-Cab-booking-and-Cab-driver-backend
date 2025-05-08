@@ -1,5 +1,8 @@
 from datetime import datetime
+import json
 import uuid
+
+import requests
 
 from admin_api.models import EmailTemplate
 
@@ -131,15 +134,37 @@ def send_dynamic_email(email_type, recipient_email, context_data):
         return False
     
     try:
-        send_mail(
-            subject=subject,
-            message="",  # Plain text version (empty)
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[recipient_email],
-            html_message=content,
-            fail_silently=False,
+        payload = {
+            "to": recipient_email,
+            "subject": subject,
+            "body": content,
+            # "subscribed": True,
+            "from": settings.DEFAULT_FROM_EMAIL,
+        }
+        response = requests.post(
+            url="https://api.useplunk.com/v1/send",
+            headers={
+                "Authorization": f"Bearer sk_1f2426383c99fae254cc8e6ccc4286d71ec298c1fba0dabc",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps(payload),
         )
-        return True
+        print("sening emial")
+        if response.status_code == 200:
+            print("Email sent successfully!")
+            return True
+        else:
+            print(f"Plunk API error: {response.status_code} - {response.text}")
+            return False
+        # send_mail(
+        #     subject=subject,
+        #     message="",  # Plain text version (empty)
+        #     from_email=settings.DEFAULT_FROM_EMAIL,
+        #     recipient_list=[recipient_email],
+        #     html_message=content,
+        #     fail_silently=False,
+        # )
+        # return True
     except Exception as e:
         print(f"Error sending email: {e}")
         return False

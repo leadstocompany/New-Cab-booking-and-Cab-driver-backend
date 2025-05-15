@@ -546,7 +546,7 @@ class VehicleDeleteView(generics.DestroyAPIView):
 
 class DriverFeedbackPageListCreate(generics.ListCreateAPIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated & IsAdminUser]
+    permission_classes = [IsAuthenticated]
     queryset = DriverFeedbackPage.objects.all()
     serializer_class =  DriverFeedbackPageSerializer
 

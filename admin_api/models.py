@@ -87,8 +87,9 @@ class EmailTemplate(models.Model):
                 EXCLUDE_TYPES_.append(type_)
 
         if self.is_active:
-            EmailTemplate.objects.filter(type=self.type, is_active=True).update(is_active=False)
-            self.is_active = True
+            pass
+            # EmailTemplate.objects.filter(type=self.type, is_active=True).update(is_active=False)
+            # self.is_active = True
 
         super().save(*args, **kwargs)
     
